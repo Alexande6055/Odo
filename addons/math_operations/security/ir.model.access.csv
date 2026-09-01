@@ -1,2 +1,2 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_math_operations_math_operations,math_operations.math_operations,model_math_operations_math_operations,base.group_user,1,1,1,1
+access_math_operations_clase_user,math.operations.clase.user,model_math_operations_clase,base.group_user,1,1,1,1

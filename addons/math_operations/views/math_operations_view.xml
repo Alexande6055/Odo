@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vista de Formulario -->
+    <record id="view_math_operation_form" model="ir.ui.view">
+        <field name="name">math.operations.clase.form</field>
+        <field name="model">math.operations.clase</field>
+        <field name="arch" type="xml">
+            <form string="Math Operation">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="operation_type"/>
+                            <field name="operand_1"/>
+                            <field name="operand_2"/>
+                        </group>
+                        <group>
+                            <field name="result" readonly="1"/>
+                            <field name="operation_date"/>
+                            <field name="user_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Notes">
+                            <field name="notes" placeholder="Add some notes here..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vista de Lista (Tree) -->
+    <record id="view_math_operation_tree" model="ir.ui.view">
+        <field name="name">math.operations.clase.tree</field>
+        <field name="model">math.operations.clase</field>
+        <field name="arch" type="xml">
+            <tree string="Math Operations">
+                <field name="name"/>
+                <field name="operation_type"/>
+                <field name="operand_1"/>
+                <field name="operand_2"/>
+                <field name="result"/>
+                <field name="operation_date"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Acción de Ventana -->
+    <record id="action_math_operations" model="ir.actions.act_window">
+        <field name="name">Math Operations</field>
+        <field name="res_model">math.operations.clase</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menús -->
+    <menuitem id="menu_math_operations_root" name="Math Operations" sequence="10"/>
+    <menuitem id="menu_math_operations_main" name="Operations" parent="menu_math_operations_root" action="action_math_operations" sequence="10"/>
+</odoo>

@@ -16,11 +16,16 @@ class MathOperationApi(http.Controller):
             'result': rec.result,
         }
 
-    @http.route('/api/operations',type='json', auth='public', methods=['GET'],csrf=False)
+    @http.route('/api/operations/get', type='json', auth='public', methods=['POST'], csrf=False)
     def get_operations(self, **kwargs):
-        records=request.env['math.operations.clase'].sudo().search([])
-        data=[self._serialize_record(rec) for rec in records]
-        return {'succes':True,'data':data,'count':len(records)}
+        records = request.env['math.operations.clase'].sudo().search([])
+        data = [self._serialize_record(rec) for rec in records]
+        
+        import json
+        return request.make_response(
+            json.dumps({'success': True, 'data': data, 'count': len(records)}),
+            headers=[('Content-Type', 'application/json')]
+        )
 
     
 
