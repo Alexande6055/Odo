@@ -21,6 +21,7 @@ class MathOperations(models.Model):
         ('substraccion','Substraccion'),
         ('multiplication','Multiplication'),
         ('division','Division'),
+        ('power','Power'),
         ],
         string='operation type',
         required=True,
@@ -52,6 +53,8 @@ class MathOperations(models.Model):
                 rec.result=rec.operand_1*rec.operand_2
             elif rec.operation_type=='division':
                 rec.result=rec.operand_1/rec.operand_2
+            elif rec.operation_type=='power':
+                rec.result=rec.operand_1**rec.operand_2
     
     @api.constrains('operation_type', 'operand_2')
     def _constrain_division_by_zero(self):
