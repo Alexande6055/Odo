@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Herencia de la vista Formulario de Vehículos -->
+    <record id="fleet_vehicle_view_form_inherit_traccar" model="ir.ui.view">
+        <field name="name">fleet.vehicle.form.inherit.traccar</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Botón de estado en la barra superior (button_box) -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_open_google_maps" 
+                        type="object" 
+                        class="oe_stat_button" 
+                        icon="fa-map-marker"
+                        attrs="{'invisible': [('last_latitude', '=', 0.0), ('last_longitude', '=', 0.0)]}">
+                    <div class="o_stat_info">
+                        <span class="o_stat_text">Ver en Mapa</span>
+                        <span class="o_stat_value">
+                            <field name="last_speed" class="oe_inline"/> km/h
+                        </span>
+                    </div>
+                </button>
+            </xpath>
+
+            <!-- Campo IMEI en el grupo de información del vehículo -->
+            <xpath expr="//field[@name='vin_sn']" position="after">
+                <field name="gps_imei" placeholder="Ej. 863294040123456"/>
+            </xpath>
+
+            <!-- Pestaña dedicada a Traccar GPS en el notebook -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Seguimiento GPS (Traccar)" name="traccar_tracking">
+                    <group>
+                        <group string="Dispositivo Traccar">
+                            <field name="gps_imei"/>
+                            <field name="traccar_device_id"/>
+                            <field name="traccar_status" widget="badge" 
+                                   decoration-success="traccar_status == 'online'" 
+                                   decoration-danger="traccar_status == 'offline'" 
+                                   decoration-muted="traccar_status == 'unknown'"/>
+                        </group>
+                        <group string="Última Posición Registrada">
+                            <field name="last_latitude"/>
+                            <field name="last_longitude"/>
+                            <field name="last_speed"/>
+                            <field name="last_gps_update"/>
+                            <field name="google_maps_url" widget="url" text="Abrir enlace de coordenadas"/>
+                        </group>
+                    </group>
+                    <div class="mt-3">
+                        <button name="action_register_traccar_device" 
+                                type="object" 
+                                string="Vincular con Traccar" 
+                                class="btn-secondary me-2" 
+                                icon="fa-link"
+                                attrs="{'invisible': [('traccar_device_id', '!=', 0), ('traccar_device_id', '!=', False)]}"/>
+                        <button name="action_sync_traccar_positions" 
+                                type="object" 
+                                string="Sincronizar Posición Ahora" 
+                                class="btn-primary me-2" 
+                                icon="fa-refresh"
+                                attrs="{'invisible': [('traccar_device_id', 'in', (False, 0))]}"/>
+                        <button name="action_open_google_maps" 
+                                type="object" 
+                                string="Ver en Google Maps" 
+                                class="btn-outline-info" 
+                                icon="fa-map"
+                                attrs="{'invisible': [('last_latitude', '=', 0.0), ('last_longitude', '=', 0.0)]}"/>
+                    </div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Herencia de la vista Lista de Vehículos para ver el estado GPS -->
+    <record id="fleet_vehicle_view_tree_inherit_traccar" model="ir.ui.view">
+        <field name="name">fleet.vehicle.tree.inherit.traccar</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state_id']" position="before">
+                <field name="gps_imei" optional="hide"/>
+                <field name="traccar_status" widget="badge" 
+                       decoration-success="traccar_status == 'online'" 
+                       decoration-danger="traccar_status == 'offline'" 
+                       optional="show"/>
+                <field name="last_speed" optional="show"/>
+                <field name="last_gps_update" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

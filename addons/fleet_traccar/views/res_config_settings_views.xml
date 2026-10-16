@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_inherit_traccar" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.traccar</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="70"/>
+        <field name="inherit_id" ref="fleet.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@id='fleet']" position="inside">
+                <h2>Servidor Traccar GPS</h2>
+                <div class="row mt16 o_settings_container" id="traccar_config_setting">
+                    <div class="col-12 col-lg-6 o_setting_box">
+                        <div class="o_setting_right_pane">
+                            <span class="o_form_label">Conexión con Traccar</span>
+                            <div class="text-muted">
+                                Configure la URL interna de Docker y las credenciales de acceso a la API de Traccar.
+                            </div>
+                            <div class="content-group mt16">
+                                <div class="row mt8">
+                                    <label for="traccar_server_url" class="col-4 o_light_label"/>
+                                    <field name="traccar_server_url" class="col-8" placeholder="http://traccar:8082"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label for="traccar_user" class="col-4 o_light_label"/>
+                                    <field name="traccar_user" class="col-8" placeholder="ej. usuario@correo.com"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label for="traccar_password" class="col-4 o_light_label"/>
+                                    <field name="traccar_password" class="col-8" password="True"/>
+                                </div>
+                                <div class="mt16">
+                                    <button name="action_test_traccar_connection" 
+                                            type="object" 
+                                            string="Probar Conexión con Traccar" 
+                                            class="btn-secondary" 
+                                            icon="fa-plug"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>
