@@ -9,6 +9,8 @@ services:
       POSTGRES_PASSWORD: odoo
     volumes:
       - odoo16-db-data:/var/lib/postgresql/data
+    networks:
+      - default
     restart: unless-stopped
 
   web:
@@ -26,7 +28,16 @@ services:
       - odoo16-web-data:/var/lib/odoo
       - ./addons:/mnt/extra-addons
       - ./config:/etc/odoo/config
+    networks:
+      - default
+      - traccar_net
     restart: unless-stopped
+
+networks:
+  default:
+  traccar_net:
+    external: true
+    name: tracar_odoo_default
 
 volumes:
   odoo16-db-data:

@@ -1,0 +1,1867 @@
+UNIVERSIDAD TÉCNICA DE AMBATO
+FACULTAD DE INGENIERÍA EN SISTEMAS ELECTRÓNICA E
+INDUSTRIAL
+CARRERA DE SOFTWARE
+PERIODO ACADÉMICO: JULIO – DICIEMBRE 2026
+
+ESTUDIANTES: Toala Steeven, Tasinchano Alexander
+CARRERA: Software
+
+PARALELO: “A”
+
+ASIGNATURA: Gestión de Calidad del Software
+
+NIVEL: 7
+
+DOCENTE: Ing. Mg. Alex Maigua Quinteros.
+
+FECHA: 07/10/2026
+
+TEMA: Taller Práctico: Aplicación de ISO/IEC 12207, ISO/IEC 25010 y CMMI en el Módulo de Ventas
+de TechStore (Odoo 16).
+
+1.
+
+Introducción y Objetivos
+
+El Aseguramiento de la Calidad del Software (SQA) establece un conjunto de actividades planificadas y
+sistemáticas orientadas a garantizar que los productos y procesos de desarrollo cumplan con los requerimientos
+técnicos y estándares establecidos [5]. Un principio fundamental de la disciplina determina que la calidad del
+producto resultante está directamente condicionada por la disciplina y el control del proceso de desarrollo
+empleado.
+En el presente taller práctico se analiza el caso del módulo de ventas de TechStore implementado sobre
+el ERP Odoo 16. En su estado inicial, dicho módulo presentó seis fallas operativas crı́ticas:
+Registro de productos con stock inconsistente.
+Existencia de clientes duplicados en la base de datos.
+Cálculos erróneos en el subtotal, el impuesto al valor agregado (IVA) y el total facturado.
+Lentitud excesiva en el registro de transacciones de venta.
+Ausencia total de pruebas documentadas del módulo.
+Carencia de métricas de defectos y de un proceso formal de mejora continua.
+Para abordar esta problemática de manera estructurada, se realiza un diagnóstico basado en tres marcos de
+referencia: ISO/IEC 12207 para las fases del ciclo de vida, ISO/IEC 25010 para las caracterı́sticas de calidad
+del software y CMMI v2.0 para la evaluación de madurez organizacional. Posteriormente, se implementan las
+refactorizaciones de código necesarias en Odoo 16, contrastando la versión defectuosa de lı́nea base frente a la
+versión remediada, y validando el comportamiento final mediante pruebas unitarias automatizadas y pruebas
+de carga concurrente.
+
+1.1.
+
+Objetivos
+Objetivo General: Evaluar y corregir las deficiencias del módulo de ventas de TechStore en Odoo
+16 mediante la aplicación de las normas ISO/IEC 12207, ISO/IEC 25010 y el modelo CMMI v2.0,
+garantizando la integridad de datos, la precisión matemática, el rendimiento y la verificabilidad del
+sistema.
+Objetivos Especı́ficos:
+1. Identificar las fases del ciclo de vida del software afectadas en el caso TechStore según el estándar
+ISO/IEC 12207.
+
+1
+
+UNIVERSIDAD TÉCNICA DE AMBATO
+FACULTAD DE INGENIERÍA EN SISTEMAS ELECTRÓNICA E
+INDUSTRIAL
+CARRERA DE SOFTWARE
+PERIODO ACADÉMICO: JULIO – DICIEMBRE 2026
+
+2. Categorizar los fallos observados bajo el modelo ISO/IEC 25010, analizando las dimensiones de
+Calidad del Producto y Calidad en Uso.
+3. Determinar el nivel de madurez actual del proceso de desarrollo según CMMI v2.0 y formular una
+propuesta de evolución hacia niveles gestionados y definidos.
+4. Implementar las soluciones técnicas en Odoo 16 para evitar clientes duplicados, validar existencias
+de inventario, corregir el cálculo del IVA al 15 % y suprimir retardos bloqueantes de procesamiento.
+5. Diseñar y ejecutar una baterı́a de pruebas unitarias automatizadas e integrar un controlador REST
+verificado mediante pruebas de carga concurrente con 20 hilos.
+
+2.
+
+Marco Teórico de Aseguramiento de la Calidad
+
+La gestión de calidad de software articula normativas internacionales enfocadas en dos vertientes complementarias: la evaluación del proceso de construcción y la evaluación del artefacto generado [6].
+
+2.1.
+
+Calidad del Proceso vs. Calidad del Producto
+ISO/IEC 12207 (Calidad del Proceso): Establece el marco común para los procesos del ciclo de
+vida del software. Define cómo debe concebirse, analizarse, diseñarse, codificarse, probarse y mantenerse
+un sistema.
+ISO/IEC 25010 (Calidad del Producto): Define el modelo jerárquico para evaluar qué tan bueno
+es el software entregado, estructurado en ocho caracterı́sticas de calidad interna y externa, y cinco
+caracterı́sticas de calidad en uso.
+
+ISO/IEC 12207: Calidad del Proceso
+ISO/IEC 25010: Calidad del Producto
+Condiciona directamente
+Enfoque en cómo se construye el software
+Enfoque en las propiedades del artefacto
+(Análisis → Diseño → Desarro(Adecuación funcional, Fiallo → Pruebas → Mantenimiento)
+bilidad, Eficiencia, etc.)
+
+Figura 1: Relación de causalidad entre la calidad del proceso y la calidad del producto.
+
+2.2.
+
+Comparativa de Equipos de Desarrollo (Equipo A vs. Equipo B)
+
+Para contextualizar el impacto del proceso, se analiza el contraste entre dos enfoques metodológicos:
+Equipo A (Enfoque empı́rico): Desarrolla código sin especificación formal, omite restricciones de
+integridad en base de datos, no genera pruebas automatizadas y realiza validaciones únicamente manuales. Como resultado, entrega sistemas frágiles que fallan ante condiciones de concurrencia y entradas
+erróneas.
+Equipo B (Enfoque disciplinado): Aplica estándares internacionales, establece restricciones SQL
+y lógicas en los modelos, automatiza suites de pruebas unitarias y monitorea métricas cuantitativas de
+defectos. Como consecuencia, entrega componentes robustos, mantenibles y tolerantes a fallos.
+
+2.3.
+
+Analogı́a con la Construcción Civil
+
+El ciclo de vida de un sistema computacional guarda correspondencia directa con la construcción de una
+edificación:
+2
+
+UNIVERSIDAD TÉCNICA DE AMBATO
+FACULTAD DE INGENIERÍA EN SISTEMAS ELECTRÓNICA E
+INDUSTRIAL
+CARRERA DE SOFTWARE
+PERIODO ACADÉMICO: JULIO – DICIEMBRE 2026
+
+Análisis: Levantamiento de necesidades del cliente (dimensiones requeridas, presupuesto y normativas
+locales).
+Diseño: Trazado de planos arquitectónicos, cálculos de resistencia estructural e instalaciones sanitarias
+y eléctricas.
+Desarrollo: Ejecución de la obra civil (cimentación, levantamiento de muros e instalaciones).
+Pruebas: Inspección técnica de tuberı́as, pruebas de carga eléctrica y control de resistencia de materiales antes de la entrega.
+Mantenimiento: Reparación de fisuras, impermeabilización y adecuaciones operativas posteriores.
+Construir software sin diseño estructurado ni pruebas equivale a levantar una edificación sin planos ni inspección de cimientos; el colapso operativo resulta inevitable ante la carga de trabajo real.
+
+3.
+
+Análisis y Diagnóstico del Caso TechStore
+
+A partir de los seis problemas reportados en el módulo de ventas de TechStore, se efectúa el diagnóstico
+formal aplicando los tres modelos requeridos por la cátedra.
+
+3.1.
+
+Diagnóstico según ISO/IEC 12207: Fases del Ciclo de Vida Afectadas
+
+El estándar ISO/IEC/IEEE 12207:2017 [2] organiza el ciclo de vida del software en procesos primarios
+y de soporte. Al contrastar el módulo de ventas frente a este estándar, se determina que las cinco fases
+fundamentales del ciclo de vida presentan anomalı́as graves.
+
+1. Análisis
+
+2. Diseño
+
+3. Desarrollo
+
+4. Pruebas
+
+5. Mantenimiento
+
+Fallas:
+Requisitos fiscales
+y de unicidad omitidos.
+
+Fallas:
+Sin restricciones
+SQL ni control
+transaccional.
+
+Fallas:
+Fórmula errada
+(+), alteración
+de precio y
+retardo ficticio.
+
+Fallas:
+Cero pruebas
+documentadas o
+automatizadas.
+
+Fallas:
+Sin métricas
+de defectos ni
+plan de mejora.
+
+Figura 2: Mapeo de fallas del caso TechStore sobre las fases del ciclo de vida ISO/IEC 12207.
+La Tabla 1 detalla el alcance de cada fase, los defectos concretos detectados en el módulo inicial y las
+soluciones implementadas.
+
+3
+
+UNIVERSIDAD TÉCNICA DE AMBATO
+FACULTAD DE INGENIERÍA EN SISTEMAS ELECTRÓNICA E
+INDUSTRIAL
+CARRERA DE SOFTWARE
+PERIODO ACADÉMICO: JULIO – DICIEMBRE 2026
+
+Tabla 1: Diagnóstico de fases del ciclo de vida ISO/IEC 12207 en el módulo de ventas.
+Fase ISO 12207
+
+Alcance de la Fase
+
+Problema
+TechStore
+
+en
+
+Solución Técnica Aplicada
+
+1. Análisis
+
+Definición de requerimientos y reglas del negocio.
+
+Omisión de requisitos: no se definieron reglas de no duplicidad,
+control de inventario ni alı́cuota
+tributaria correcta.
+
+Especificación de reglas: unicidad por cédula/RUC, inventario no negativo y tasa de IVA
+legal del 15 %.
+
+2. Diseño
+
+Modelado
+arquitectónico,
+esquemas
+DDL y validaciones.
+
+Los modelos carecı́an de restricciones de unicidad en base de
+datos y de mecanismos de consistencia transaccional.
+
+Definición de restricciones SQL
+a nivel de PostgreSQL, indexación de campos clave y validadores Python en ORM.
+
+3. Desarrollo
+
+Codificación fuente del
+módulo en Odoo.
+
+Error de cálculo (subtotal con
+suma), duplicación indebida de
+precios con cantidad > 5 y retardos con time.sleep.
+
+Refactorización: subtotal mediante producto, IVA al 15 %,
+supresión de pausas y medición
+de latencia real.
+
+4. Pruebas
+
+Verificación del comportamiento del software.
+
+No existen pruebas documentadas del módulo; ausencia de archivos de verificación en el repositorio.
+
+Creación de suite formal
+de pruebas unitarias con
+TransactionCase de Odoo (6
+casos de prueba automatizados).
+
+5. Mantenimiento
+
+Corrección continua y
+evolución del sistema.
+
+Ausencia de métricas de defectos y falta de control formal de
+cambios; enfoque exclusivamente reactivo.
+
+Implementación de métricas de
+densidad de defectos, eficiencia
+de remoción (DRE) y adopción
+del ciclo PDCA.
+
+3.2.
+
+Detectado
+
+Diagnóstico según ISO/IEC 25010: Caracterı́sticas de Calidad Afectadas
+
+El estándar ISO/IEC 25010:2011 [1] estructura la calidad del software en dos modelos: Calidad del Producto (propiedades internas y externas del software) y Calidad en Uso (impacto en el contexto operativo del
+usuario final).
+Calidad del Producto
+(Product Quality)
+
+Calidad en Uso
+(Quality in Use)
+
+• Adecuación Funcional (cálculos correctos)
+• Eficiencia de Desempeño (latencia
+y recursos)
+• Fiabilidad (integridad y tolerancia a
+fallos)
+• Mantenibilidad (capacidad de prueba)
+• Seguridad (integridad de registros)
+
+• Efectividad (exactitud en la tarea)
+• Eficiencia (tiempo empleado por
+transacción)
+• Satisfacción (confianza del operador)
+• Libertad de Riesgo (mitigación legal y financiera)
+• Cobertura de Contexto (interfaz y
+API REST)
+
+Figura 3: Evaluación bajo el doble modelo de la norma ISO/IEC 25010.
+
+4
+
+UNIVERSIDAD TÉCNICA DE AMBATO
+FACULTAD DE INGENIERÍA EN SISTEMAS ELECTRÓNICA E
+INDUSTRIAL
+CARRERA DE SOFTWARE
+PERIODO ACADÉMICO: JULIO – DICIEMBRE 2026
+
+3.2.1.
+
+Evaluación de la Calidad del Producto
+
+La Tabla 2 resume la evaluación de las ocho caracterı́sticas de calidad del producto sobre el módulo de
+ventas.
+Tabla 2: Evaluación de caracterı́sticas de Calidad del Producto según ISO/IEC 25010.
+Caracterı́stica
+
+Criterio Evaluado
+
+Estado
+
+Evidencia en el Caso TechStore
+
+Adecuación Funcional
+
+Corrección y completitud funcional.
+
+Crı́tico
+
+Eficiencia de Desempeño
+
+Tiempos de respuesta y uso de recursos.
+
+Crı́tico
+
+Fiabilidad
+
+Tolerancia a fallos y consistencia de datos.
+
+Crı́tico
+
+Mantenibilidad
+
+Modificabilidad y verificabilidad.
+
+Deficiente
+
+Seguridad
+
+Integridad y no duplicidad de registros.
+
+Deficiente
+
+Compatibilidad
+
+Interoperabilidad de servicios.
+
+Medio
+
+Usabilidad
+
+Claridad en la retroalimentación al usuario.
+
+Medio
+
+Portabilidad
+
+Capacidad de adaptación de entorno.
+
+El subtotal suma valores en vez de multiplicar; el IVA aplica al 5 % en lugar
+del 15 %; los precios se alteran indebidamente.
+Retardos
+artificiales
+mediante
+time.sleep(0.10) y latencias simuladas de hasta 3.5 segundos bloquean los
+hilos del servidor.
+Se permite la venta de productos sin
+existencias y el registro de inventarios
+negativos sin lanzar excepciones.
+No existen pruebas documentadas ni
+automatizadas que aseguren la no regresión ante cambios de código.
+Permite duplicidad de clientes con la
+misma cédula o correo electrónico, violando la integridad de datos.
+La API REST carecı́a de control estructurado de excepciones ante datos
+anómalos.
+Ausencia de mensajes descriptivos ante
+entradas inválidas o desbordamiento de
+inventario.
+Ejecución soportada en contenedores
+Docker sobre arquitectura Odoo 16 y
+PostgreSQL 15.
+
+3.2.2.
+
+Aceptable
+
+Evaluación de la Calidad en Uso
+
+Las fallas impactan de forma directa la experiencia de operación y los riesgos del negocio:
+Efectividad: En el estado inicial, la exactitud era nula debido a montos facturados incorrectos e
+inventario inconsistente. Tras la remediación, el 100 % de las transacciones válidas se registra con
+exactitud matemática y respaldo contable.
+Eficiencia en Uso: La lentitud forzada obligaba al operador a esperar varios segundos por venta. Con
+la optimización, cada registro se procesa en menos de 20 milisegundos.
+Libertad de Riesgo: El cálculo del IVA al 5 % exponı́a a la empresa a contingencias tributarias graves
+frente a la autoridad fiscal (SRI en Ecuador), mientras que la venta de productos agotados generaba
+incumplimientos comerciales. La versión corregida erradica ambos riesgos.
+
+3.3.
+
+Diagnóstico según CMMI v2.0: Nivel de Madurez del Proceso
+
+El modelo CMMI v2.0 [3] clasifica la madurez de los procesos organizacionales en cinco niveles progresivos.
+
+5
+
+UNIVERSIDAD TÉCNICA DE AMBATO
+FACULTAD DE INGENIERÍA EN SISTEMAS ELECTRÓNICA E
+INDUSTRIAL
+CARRERA DE SOFTWARE
+PERIODO ACADÉMICO: JULIO – DICIEMBRE 2026
+
+Nivel 5
+Optimizado
+(Mejora
+continua)
+Nivel 4
+Cuantitativo
+(Medir proceso)
+TechStore Remediado
+
+TechStore Inicial
+Nivel 1
+Inicial
+(Solo programar)
+
+Nivel 2
+Gestionado
+(Programar
+y probar)
+
+Nivel 3
+Definido
+(Proceso
+definido)
+
+Figura 4: Niveles de madurez CMMI y posición del módulo TechStore.
+3.3.1.
+
+Interpretación de Niveles CMMI en el Contexto de Odoo
+
+La Tabla 3 ilustra la interpretación de los niveles de madurez aplicados al desarrollo de módulos en Odoo.
+Tabla 3: Interpretación de los niveles de madurez CMMI en el desarrollo de Odoo.
+Nivel
+
+Denominación CMMI
+
+Significado Operativo
+
+Caracterı́sticas de la Organización
+
+1
+
+Inicial
+
+Solo programar
+
+2
+
+Gestionado
+
+Programar y probar
+
+3
+
+Definido
+
+Proceso estandarizado
+
+4
+
+Gestionado Cuantitativamente
+
+Medir el proceso
+
+5
+
+Optimizado
+
+Mejorar continuamente
+
+Proceso informal, no planificado y reactivo. No existen pruebas, restricciones
+ni documentación formal.
+Proyectos gestionados con control de requisitos, pruebas unitarias automatizadas y control de cambios.
+Conjunto de procesos organizacionales
+definidos; guı́as de desarrollo y estándares aplicados a todos los módulos.
+Uso
+de
+indicadores
+estadı́sticos
+(Defectos/KLOC, latencias de servidor) para controlar el rendimiento
+del proceso.
+Enfoque proactivo de mejora continua
+basado en análisis de causas raı́z y optimización preventiva.
+
+3.3.2.
+
+Justificación del Diagnóstico de TechStore
+
+El diagnóstico ubica a TechStore en el Nivel 1: Inicial por las siguientes razones:
+1. El desarrollo se realizó de manera empı́rica, sin formalizar requisitos de integridad ni especificaciones
+fiscales.
+2. No se implementaron pruebas de software de ningún tipo, tal como indica el reporte: ”No existen
+pruebas documentadas del módulo”.
+
+6
+
+UNIVERSIDAD TÉCNICA DE AMBATO
+FACULTAD DE INGENIERÍA EN SISTEMAS ELECTRÓNICA E
+INDUSTRIAL
+CARRERA DE SOFTWARE
+PERIODO ACADÉMICO: JULIO – DICIEMBRE 2026
+
+3. Los errores fueron descubiertos en etapas avanzadas por los usuarios y operadores debido a lentitud y
+desajustes contables.
+4. El equipo no recopilaba métricas ni disponı́a de un procedimiento formal para la corrección sistemática
+de no conformidades.
+Con la refactorización técnica y la incorporación de pruebas unitarias automatizadas realizadas en este
+taller, la organización avanza al Nivel 2 (Gestionado), dejando trazado el camino para escalar a los niveles
+3, 4 y 5.
+
+4.
+
+Desarrollo Práctico: Implementación de Mejoras en Odoo 16
+
+Para evidenciar la evolución del software bajo principios de SQA, se presenta el contraste técnico entre
+la Implementación de Lı́nea Base (techstore quality anterior) y la Implementación Remediada
+(techstore quality taller 3), desplegada en el entorno local de Odoo16/odoo gc.
+
+4.1.
+
+Mejora 1: Prevención de Clientes Duplicados
+
+Implementación de Lı́nea Base (techstore quality anterior): El modelo techstore.cliente no
+contenı́a restricciones de unicidad ni validaciones sobre los datos del cliente. Los campos de identificación
+carecı́an de ı́ndices en base de datos.
+1
+2
+
+# LINEA BASE : t e c h s t o r e _ q u a l i t y _ a n t e r i o r
+from odoo import models , fields
+
+3
+4
+5
+6
+7
+
+class T ec h s t o r e C l i e n t e ( models . Model ) :
+_name = ’ techstore . cliente ’
+_description = ’ Cliente TechStore ’
+_order = ’ name ’
+
+8
+9
+10
+11
+12
+13
+
+name = fields . Char ( string = ’ Nombre del cliente ’ , required = True )
+cedula = fields . Char ( string = ’ Cedula / RUC ’)
+email = fields . Char ( string = ’ Correo ’)
+telefono = fields . Char ( string = ’ Telefono ’)
+activo = fields . Boolean ( string = ’ Activo ’ , default = True )
+
+Listing 1: Lı́nea Base: Ausencia de restricciones en models/techstore cliente.py.
+
+Implementación Remediada (techstore quality taller 3): Se incorporaron restricciones de unicidad
+a nivel de PostgreSQL con sql constraints para la cédula y el correo electrónico, indexación en base de
+datos y un validador en Python para verificar que el número de cédula o RUC tenga 10 o 13 dı́gitos numéricos.
+# REMEDIACION : t e c h s t o r e _ q u a l i t y _ t a l l e r _ 3
+from odoo import models , fields , api
+3 from odoo . exceptions import V a li da ti o nE rr or
+1
+2
+
+4
+5
+6
+7
+8
+
+class T ec h s t o r e C l i e n t e ( models . Model ) :
+_name = ’ techstore . cliente ’
+_description = ’ Cliente TechStore ’
+_order = ’ name ’
+
+9
+10
+11
+12
+13
+
+name = fields . Char ( string = ’ Nombre del cliente ’ , required = True , index = True )
+cedula = fields . Char ( string = ’ Cedula / RUC ’ , required = True , index = True )
+email = fields . Char ( string = ’ Correo ’ , index = True )
+telefono = fields . Char ( string = ’ Telefono ’)
+
+7
+
+UNIVERSIDAD TÉCNICA DE AMBATO
+FACULTAD DE INGENIERÍA EN SISTEMAS ELECTRÓNICA E
+INDUSTRIAL
+CARRERA DE SOFTWARE
+PERIODO ACADÉMICO: JULIO – DICIEMBRE 2026
+
+14
+
+activo = fields . Boolean ( string = ’ Activo ’ , default = True )
+
+15
+16
+17
+
+18
+
+19
+
+_ s q l _ c o n s t r a i nt s = [
+( ’ cedula_unique ’ , ’ UNIQUE ( cedula ) ’ , ’ Ya existe un cliente registrado con esta Cedula
+/ RUC . ’) ,
+( ’ email_unique ’ , ’ UNIQUE ( email ) ’ , ’ El correo electronico ya se encuentra registrado
+para otro cliente . ’)
+]
+
+20
+21
+22
+23
+24
+25
+
+26
+27
+
+28
+29
+
+@api . constrains ( ’ name ’)
+def _check_name ( self ) :
+for rec in self :
+if not rec . name or not rec . name . strip () :
+raise V al i da ti o nE rr or ( " El nombre del cliente no puede estar vacio ni
+contener solo espacios . " )
+if len ( rec . name . strip () ) > 150:
+raise V al i da ti o nE rr or ( " El nombre del cliente no puede exceder los 150
+caracteres . " )
+if any ( char . isdigit () for char in rec . name ) :
+raise V al i da ti o nE rr or ( " El nombre del cliente no debe contener numeros . " )
+
+30
+31
+32
+33
+34
+35
+36
+37
+38
+
+39
+
+@api . constrains ( ’ cedula ’)
+def _check_cedula ( self ) :
+for rec in self :
+if rec . cedula :
+val = rec . cedula . strip ()
+if not ( val . isdigit () and len ( val ) in (10 , 13) ) :
+raise V a li da ti o nE rr or (
+f " La Cedula / RUC ’{ rec . cedula } ’ no es valida . Debe contener
+exactamente 10 digitos ( cedula ) o 13 digitos ( RUC ) . "
+)
+
+40
+41
+42
+43
+44
+45
+46
+
+@api . constrains ( ’ email ’)
+def _check_email ( self ) :
+email_regex = r ’ ^[\ w \. -]+ @ [\ w \. -]+\.\ w + $ ’
+for rec in self :
+if rec . email and not re . match ( email_regex , rec . email . strip () ) :
+raise V al i da ti o nE rr or ( f " El formato del correo electronico ’{ rec . email } ’ es
+invalido . " )
+
+47
+48
+49
+50
+51
+52
+53
+54
+55
+
+56
+57
+
+58
+59
+60
+61
+
+@api . constrains ( ’ telefono ’)
+def _c he c k_ te le f on o ( self ) :
+for rec in self :
+if rec . telefono :
+val = rec . telefono . strip ()
+errores = []
+if not val . isdigit () :
+errores . append ( " debe contener unicamente digitos numericos ( no se
+permiten letras ni simbolos ) " )
+if len ( val ) != 10:
+errores . append ( f " la longitud debe ser exactamente de 10 digitos (
+longitud actual : { len ( val ) }) " )
+if errores :
+raise V a li da ti o nE rr or (
+f " El telefono ’{ rec . telefono } ’ no es valido : { ’ y ’. join ( errores ) }. "
+)
+
+Listing 2: Implementación Remediada: Control de unicidad y formato en models/techstore cliente.py.
+
+8
+
+UNIVERSIDAD TÉCNICA DE AMBATO
+FACULTAD DE INGENIERÍA EN SISTEMAS ELECTRÓNICA E
+INDUSTRIAL
+CARRERA DE SOFTWARE
+PERIODO ACADÉMICO: JULIO – DICIEMBRE 2026
+
+4.2.
+
+Mejora 2: Validación y Control Transaccional de Stock
+
+Implementación de Lı́nea Base (techstore quality anterior): El modelo de productos permitı́a
+cantidades negativas en inventario y no validaba que el precio unitario fuera un valor positivo. Asimismo, el
+módulo de ventas permitı́a confirmar órdenes sin validar existencias disponibles ni descontarlas.
+1
+2
+
+# LINEA BASE : t e c h s t o r e _ q u a l i t y _ a n t e r i o r
+from odoo import models , fields
+
+3
+4
+5
+6
+7
+
+class T e c h s t o r e P r o d u c t o ( models . Model ) :
+_name = ’ techstore . producto ’
+_description = ’ Producto TechStore ’
+_order = ’ name ’
+
+8
+9
+10
+11
+12
+13
+
+name = fields . Char ( string = ’ Producto ’ , required = True )
+codigo = fields . Char ( string = ’ Codigo ’)
+pr ec io _ un it ar i o = fields . Float ( string = ’ Precio unitario ’ , required = True )
+s t o c k _ d i s p o n i bl e = fields . Integer ( string = ’ Stock disponible ’ , default =10)
+activo = fields . Boolean ( string = ’ Activo ’ , default = True )
+
+Listing 3: Lı́nea Base: Sin control de inventario en models/techstore producto.py.
+
+Implementación Remediada (techstore quality taller 3): Se introdujeron restricciones SQL de no
+negatividad para precio y stock en el producto (CHECK(stock disponible >= 0)), y se agregó una validación
+preventiva en el modelo de ventas para rechazar solicitudes que superen las existencias.
+# REMEDIACION : t e c h s t o r e _ q u a l i t y _ t a l l e r _ 3
+from odoo import models , fields , api
+3 from odoo . exceptions import V a li da ti o nE rr or
+1
+2
+
+4
+5
+6
+7
+8
+
+class T e c h s t o r e P r o d u c t o ( models . Model ) :
+_name = ’ techstore . producto ’
+_description = ’ Producto TechStore ’
+_order = ’ name ’
+
+9
+10
+11
+12
+13
+14
+
+name = fields . Char ( string = ’ Producto ’ , required = True , index = True )
+codigo = fields . Char ( string = ’ Codigo ’ , index = True )
+pr ec io _ un it ar i o = fields . Float ( string = ’ Precio unitario ’ , required = True , default =0.0)
+s t o c k _ d i s p o n i bl e = fields . Integer ( string = ’ Stock disponible ’ , default =10)
+activo = fields . Boolean ( string = ’ Activo ’ , default = True )
+
+15
+16
+17
+
+18
+
+19
+
+20
+
+_ s q l _ c o n s t r a i nt s = [
+( ’ codigo_unique ’ , ’ UNIQUE ( codigo ) ’ , ’ El codigo del producto ya se encuentra
+registrado . ’) ,
+( ’ c h e c k _ p r e c i o _ p o s i t i v o ’ , ’ CHECK ( p re ci o_ u ni ta ri o >= 0) ’ , ’ El precio unitario no
+puede ser negativo . ’) ,
+( ’ c h e c k _ s t o c k _ n o _ n e g a t i v o ’ , ’ CHECK ( s t o c k _ d i s po n i b l e >= 0) ’ , ’ El stock disponible no
+puede ser negativo . ’)
+]
+
+21
+22
+23
+24
+25
+26
+
+27
+28
+
+@api . constrains ( ’ name ’)
+def _check_name ( self ) :
+for rec in self :
+if not rec . name or not rec . name . strip () :
+raise V al i da ti o nE rr or ( " El nombre del producto no puede estar vacio ni
+contener solo espacios . " )
+if len ( rec . name . strip () ) > 150:
+raise V al i da ti o nE rr or ( " El nombre del producto no puede exceder los 150
+caracteres . " )
+
+29
+
+9
+
+UNIVERSIDAD TÉCNICA DE AMBATO
+FACULTAD DE INGENIERÍA EN SISTEMAS ELECTRÓNICA E
+INDUSTRIAL
+CARRERA DE SOFTWARE
+PERIODO ACADÉMICO: JULIO – DICIEMBRE 2026
+
+30
+31
+32
+33
+34
+
+35
+36
+
+@api . constrains ( ’ p re c io _u ni t ar io ’)
+def _ c h e c k _ p r e c i o _ u n i t a r i o ( self ) :
+for rec in self :
+if rec . p r ec io _ un it ar i o <= 0:
+raise V al i da ti o nE rr or ( " El precio unitario del producto debe ser
+estrictamente mayor a 0. " )
+if rec . p r ec io _ un it ar i o > 10 _000_000 .0:
+raise V al i da ti o nE rr or ( " El precio unitario no puede exceder $ 10 ,000 ,000.00. " )
+
+37
+38
+39
+40
+41
+42
+
+43
+44
+
+@api . constrains ( ’ s t o ck _ d i s p o n i b l e ’)
+def _ c h e c k _ s t o c k _ d i s p o n i b l e ( self ) :
+for rec in self :
+if rec . s t o c k _ d i s p o ni b l e < 0:
+raise V al i da ti o nE rr or ( " El stock disponible no puede ser un numero negativo . "
+)
+if rec . s t o c k _ d i s p o ni b l e > 1 _000_000 :
+raise V al i da ti o nE rr or ( " El stock disponible no puede exceder 1 ,000 ,000
+unidades ( limite operativo ) . " )
+
+Listing 4: Implementación Remediada: Restricciones de producto en models/techstore producto.py.
+1
+2
+3
+4
+5
+
+6
+7
+
+8
+9
+10
+11
+
+12
+
+@api . constrains ( ’ cantidad ’ , ’ producto_id ’)
+def _ c h e c k _ s t o c k _ s u f i c i e n t e ( self ) :
+for rec in self :
+if rec . cantidad <= 0:
+raise V a li da ti o nE rr or ( " La cantidad a vender debe ser estrictamente mayor a
+0. " )
+if rec . cantidad > 1 _000_000 :
+raise V a li da ti o nE rr or ( " La cantidad a vender no puede exceder 1 ,000 ,000 de
+unidades ( limite operativo ) . " )
+if rec . producto_id and rec . cantidad > rec . producto_id . s t o c k _ d i s p o n i b l e :
+raise V a li da ti o nE rr or (
+f " Stock insuficiente para ’{ rec . producto_id . name } ’. "
+f " Disponible : { rec . producto_id . s t o c k _ d i s p o n i b l e } , Solicitado : { rec .
+cantidad }. "
+)
+
+Listing 5: Implementación Remediada: Validación de suficiencia de inventario en models/techstore venta.py.
+
+4.3.
+
+Mejora 3: Corrección del Cálculo de Subtotal, IVA y Total
+
+Implementación de Lı́nea Base (techstore quality anterior): El método computado sumaba la
+cantidad con el precio unitario en lugar de multiplicarlos, calculaba el IVA con una alı́cuota incorrecta del
+5 % y alteraba el precio unitario multiplicándolo por dos si la cantidad superaba las 5 unidades.
+# LINEA BASE : t e c h s t o r e _ q u a l i t y _ a n t e r i o r
+@api . depends ( ’ cantidad ’ , ’ pr ec io _ un it ar i o ’ , ’ descuento ’)
+3
+def _ c o m p u t e _ s u b t o t a l ( self ) :
+4
+for rec in self :
+5
+# Defecto : Suma en lugar de mult iplicac ion
+6
+rec . subtotal = rec . cantidad + rec . p re ci o _u ni t ar io - rec . descuento
+1
+2
+
+7
+8
+9
+10
+11
+12
+13
+
+@api . depends ( ’ subtotal ’)
+def _ c o m p u t e _ t o t a l e s ( self ) :
+for rec in self :
+# Defecto : Tasa distorsionada al 5 %
+rec . iva = rec . subtotal * 0.05
+rec . total = rec . subtotal + rec . iva
+
+Listing 6: Lı́nea Base: Errores aritméticos en models/techstore venta.py.
+
+10
+
+UNIVERSIDAD TÉCNICA DE AMBATO
+FACULTAD DE INGENIERÍA EN SISTEMAS ELECTRÓNICA E
+INDUSTRIAL
+CARRERA DE SOFTWARE
+PERIODO ACADÉMICO: JULIO – DICIEMBRE 2026
+
+Implementación Remediada (techstore quality taller 3): Se corrigió la fórmula para efectuar el
+producto aritmético entre cantidad y precio unitario descontando la rebaja comercial, fijando la alı́cuota
+legal del IVA al 15 % vigente en Ecuador (TASA IVA = 0.15) con redondeo a dos decimales.
+1
+2
+
+# REMEDIACION : t e c h s t o r e _ q u a l i t y _ t a l l e r _ 3
+TASA_IVA = 0.15 # Alicuota legal vigente (15 %)
+
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+
+13
+
+@api . constrains ( ’ descuento ’ , ’ cantidad ’ , ’ p re c io _u ni t ar io ’)
+def _ c h e c k _ d e s c u e n t o _ v a l i d o ( self ) :
+for rec in self :
+if rec . descuento < 0:
+raise V a li da ti o nE rr or ( " El descuento no puede ser un valor negativo . " )
+monto_base = rec . cantidad * rec . pr e ci o_ un i ta ri o
+if rec . descuento > monto_base :
+raise V al i da ti o nE rr or (
+f " El descuento ( $ { rec . descuento :.2 f }) no puede ser mayor al valor base (
+$ { monto_base :.2 f }) . "
+)
+
+14
+
+@api . depends ( ’ cantidad ’ , ’ p r ec io _u n it ar i o ’ , ’ descuento ’)
+def _ c o m p u t e _ s u b t o t a l ( self ) :
+for rec in self :
+base = rec . cantidad * rec . p r ec io _u n it ar io
+rec . subtotal = round ( max (0.0 , base - rec . descuento ) , 2)
+
+15
+16
+17
+18
+19
+20
+
+@api . depends ( ’ subtotal ’)
+def _ c o m p u t e _ t o t a l e s ( self ) :
+for rec in self :
+rec . iva = round ( rec . subtotal * self . TASA_IVA , 2)
+rec . total = round ( rec . subtotal + rec . iva , 2)
+
+21
+22
+23
+24
+25
+
+Listing 7: Implementación
+models/techstore venta.py.
+
+4.4.
+
+Remediada:
+
+Fórmulas
+
+matemáticas
+
+y
+
+validación
+
+de
+
+descuentos
+
+en
+
+Mejora 4: Optimización de Rendimiento y Transaccionalidad
+
+Implementación de Lı́nea Base (techstore quality anterior): El método create() introducı́a retardos artificiales con time.sleep(0.10) y latencias ficticias de hasta 3.5 segundos generadas aleatoriamente,
+sin descontar el stock del producto vendido.
+# LINEA BASE : t e c h s t o r e _ q u a l i t y _ a n t e r i o r
+@api . model
+3
+def create ( self , vals ) :
+4
+# Defecto : Alteracion de precio por cantidad > 5
+5
+if vals . get ( ’ cantidad ’ , 0) > 5:
+6
+vals [ ’ p re ci o_ u ni ta ri o ’] = vals . get ( ’ p re ci o_ u ni ta r io ’ , 0) * 2
+1
+2
+
+7
+8
+9
+10
+11
+12
+13
+
+# Defecto : Retardo bloqueante forzado
+tiempo = random . uniform (0.10 , 3.50)
+time . sleep (0.10)
+vals [ ’ t i e m p o _ r e s p u e s t a ’] = tiempo
+vals [ ’ e stado_c alidad ’] = ’ observado ’
+return super () . create ( vals )
+
+Listing 8: Lı́nea Base: Retardos bloqueantes en models/techstore venta.py.
+
+11
+
+UNIVERSIDAD TÉCNICA DE AMBATO
+FACULTAD DE INGENIERÍA EN SISTEMAS ELECTRÓNICA E
+INDUSTRIAL
+CARRERA DE SOFTWARE
+PERIODO ACADÉMICO: JULIO – DICIEMBRE 2026
+
+Implementación Remediada (techstore quality taller 3): Se suprimieron todos los retardos artificiales, se validaron lı́mites de cantidad y descuento, se implementó el decremento atómico de existencias y se
+instrumentó la medición real del tiempo de ejecución del servidor utilizando el reloj del sistema.
+# REMEDIACION : t e c h s t o r e _ q u a l i t y _ t a l l e r _ 3
+@api . model
+3
+def create ( self , vals ) :
+4
+inicio = time . time ()
+1
+2
+
+5
+6
+7
+8
+9
+10
+
+cantidad = vals . get ( ’ cantidad ’ , 1)
+if cantidad <= 0:
+raise V al i da ti on E rr or ( " La cantidad a vender debe ser estrictamente mayor a 0. " )
+if cantidad > 1 _000_000 :
+raise V al i da ti on E rr or ( " La cantidad a vender no puede exceder 1 ,000 ,000 de
+unidades . " )
+
+11
+
+descuento = vals . get ( ’ descuento ’ , 0.0)
+if descuento < 0:
+raise V al i da ti on E rr or ( " El descuento no puede ser un valor negativo . " )
+
+12
+13
+14
+15
+
+producto = None
+if vals . get ( ’ producto_id ’) :
+producto = self . env [ ’ techstore . producto ’ ]. browse ( vals . get ( ’ producto_id ’) )
+if not producto . exists () :
+raise V al i da ti o nE rr or ( " El producto seleccionado no existe . " )
+
+16
+17
+18
+19
+20
+21
+
+vals . setdefault ( ’ p re c io _u n it ar io ’ , producto . p r ec io _u n it ar io )
+vals [ ’ s t o c k _ d i s p o n i b l e ’] = producto . s t o c k _ d i s p o n i b l e
+
+22
+23
+24
+
+# Validacion preventiva de stock en persistencia
+if cantidad > producto . s t o c k _ d i s p o ni b l e :
+raise V al i da ti o nE rr or (
+f " Stock insuficiente para ’{ producto . name } ’. "
+f " Disponible : { producto . s t o c k_ d i s p o n i b l e } , Solicitado : { cantidad }. "
+)
+
+25
+26
+27
+28
+29
+30
+31
+
+if not vals . get ( ’ name ’) or vals . get ( ’ name ’) == ’ Nueva venta ’:
+seq_count = self . search_count ([]) + 1
+vals [ ’ name ’] = f " VENTA -{ seq_count :04 d } "
+
+32
+33
+34
+35
+
+record = super () . create ( vals )
+
+36
+37
+
+# Decremento atomico de inventario
+if producto and producto . exists () :
+producto . s t o c k _ d i s p o n i b le -= record . cantidad
+
+38
+39
+40
+41
+
+# Medicion real del tiempo de respuesta del servidor ( segundos )
+record . ti e m p o _ r e s p u e s t a = round ( time . time () - inicio , 4)
+record . estado_ calidad = ’ aceptable ’
+return record
+
+42
+43
+44
+45
+
+Listing 9: Implementación Remediada: Persistencia optimizada en models/techstore venta.py.
+
+4.5.
+
+Automatización de Pruebas Unitarias Exhaustivas
+
+Para dar solución definitiva a la ausencia de pruebas documentadas y garantizar que el sistema soporte
+valores lı́mite, cadenas anómalas, nombres con dı́gitos numéricos, teléfonos no numéricos y desbordamientos
+enteros, se estructuró una suite de 29 pruebas unitarias en el archivo tests/test techstore quality.py
+utilizando la clase TransactionCase de Odoo. Las pruebas se agrupan en cuatro bloques estratégicos:
+12
+
+UNIVERSIDAD TÉCNICA DE AMBATO
+FACULTAD DE INGENIERÍA EN SISTEMAS ELECTRÓNICA E
+INDUSTRIAL
+CARRERA DE SOFTWARE
+PERIODO ACADÉMICO: JULIO – DICIEMBRE 2026
+
+1. Bloque 1 (Clientes e Identidad): Pruebas de unicidad de cédula/correo, validación de longitudes
+lı́mite (5, 10, 13 y 25 dı́gitos), rechazo de caracteres alfanuméricos, nombres vacı́os, rechazo de nombres
+que contengan números y validación estricta de teléfono (exigencia de exactamente 10 dı́gitos numéricos
+con mensajes descriptivos que alertan si contiene letras o si la longitud es incorrecta).
+2. Bloque 2 (Inventario y Stock): Validación de no negatividad, lı́mite operativo de unidades (hasta
+1,000,000 para prevenir desbordamiento de enteros de 32 bits), consumo exacto del stock con saldo en
+cero y rechazo de sobregiros.
+3. Bloque 3 (Cálculo de IVA y Totales): Exactitud de fórmulas con IVA al 15 %, redondeo legal a dos
+decimales en valores fraccionarios, descuentos del 100 % (saldo cero), rechazo de descuentos superiores
+a la base y rechazo de cantidades nulas o negativas.
+4. Bloque 4 (Rendimiento): Verificación de latencia sub-segundo (< 250 ms) y procesamiento ágil de
+transacciones consecutivas por lote.
+
+13
+
+UNIVERSIDAD TÉCNICA DE AMBATO
+FACULTAD DE INGENIERÍA EN SISTEMAS ELECTRÓNICA E
+INDUSTRIAL
+CARRERA DE SOFTWARE
+PERIODO ACADÉMICO: JULIO – DICIEMBRE 2026
+
+Tabla 4: Matriz y resultados de ejecución de la suite de 29 pruebas unitarias.
+
+4.6.
+
+ID Caso
+
+Bloque / Criterio
+
+Objetivo del Caso de Prueba
+
+Resultado Esperado
+
+T. Ejec.
+
+Estado
+
+TC-01
+
+Clientes - Integridad
+
+PASÓ
+
+Clientes - Unicidad
+
+0.007 s
+
+PASÓ
+
+TC-03
+
+Clientes - Robustez
+
+0.008 s
+
+PASÓ
+
+TC-04
+
+Clientes - Lı́mite Longitud
+
+0.008 s
+
+PASÓ
+
+TC-05
+
+Clientes - Formato
+
+0.007 s
+
+PASÓ
+
+TC-06
+
+Clientes - Validez RUC
+
+0.007 s
+
+PASÓ
+
+TC-07
+
+Clientes - Email
+
+0.007 s
+
+PASÓ
+
+TC-08
+
+Clientes - Integridad
+
+0.009 s
+
+PASÓ
+
+TC-09
+
+Clientes - Nombre Números
+
+0.007 s
+
+PASÓ
+
+TC-10
+
+Clientes - Teléfono Letras
+
+0.007 s
+
+PASÓ
+
+TC-11
+
+Clientes - Teléfono Longitud
+
+0.007 s
+
+PASÓ
+
+TC-12
+
+Clientes - Teléfono Válido
+
+Rechazo por restricción
+UNIQUE.
+Rechazo por restricción
+UNIQUE.
+Rechazo
+con
+ValidationError.
+Rechazo
+con
+ValidationError.
+Rechazo
+con
+ValidationError.
+Registro exitoso en sistema.
+Rechazo por expresión regular.
+Rechazo
+con
+ValidationError.
+Rechazo
+con
+ValidationError.
+Error: alerta letras y longitud.
+Rechazo por longitud ̸=
+10.
+Registro exitoso del contacto.
+
+0.014 s
+
+TC-02
+
+Registrar cliente con cédula ya existente (1712345678).
+Registrar cliente con correo ya existente en base de datos.
+Cédula corta de longitud inválida (5
+dı́gitos).
+Cédula extensa fuera de norma (25
+dı́gitos).
+Cédula con caracteres alfanuméricos
+(171234567A).
+Registrar cliente con RUC válido de
+13 dı́gitos numéricos.
+Correo electrónico sin estructura
+estándar ni dominio.
+Nombre compuesto únicamente por
+espacios en blanco.
+Rechazar cliente cuyo nombre contenga dı́gitos numéricos.
+Teléfono con letras y longitud inválida (abcdef).
+Teléfono numérico incompleto de 9
+dı́gitos.
+Teléfono correcto de exactamente 10
+dı́gitos numéricos.
+
+0.007 s
+
+PASÓ
+
+TC-13
+
+Stock - Fiabilidad
+
+0.009 s
+
+PASÓ
+
+TC-15
+
+Stock - Validación Precio
+
+0.008 s
+
+PASÓ
+
+TC-16
+
+Stock - Lı́mite Precio
+
+0.008 s
+
+PASÓ
+
+TC-17
+
+Stock - Disponibilidad
+
+0.008 s
+
+PASÓ
+
+TC-18
+
+Stock - Consumo Exacto
+
+0.014 s
+
+PASÓ
+
+TC-19
+
+Stock - Valor Lı́mite
+
+0.008 s
+
+PASÓ
+
+TC-20
+
+Stock - Transaccional
+
+Rechazo por CHECK
+SQL.
+Rechazo preventivo en
+ORM.
+Rechazo
+con
+ValidationError.
+Rechazo preventivo de valor.
+Rechazo por stock insuficiente.
+Stock final igual a 0 unidades.
+Rechazo
+con
+ValidationError.
+Segunda rechazada, stock
+intacto.
+
+PASÓ
+
+Stock - Desbordamiento
+
+Creación de producto con inventario
+negativo (−10).
+Stock que supera el lı́mite operativo
+(5, 000, 000 unidades).
+Producto con precio unitario menor
+o igual a cero.
+Producto con precio desproporcionado (> $10, 000, 000).
+Venta de 20 unidades con inventario
+disponible de 15.
+Venta de 15 unidades con stock de
+15; saldo resultante exacto.
+Sobregiro de stock por una unidad
+(disponible 5, pedido 6).
+Ventas sucesivas: la primera consume parcial, la segunda excede.
+
+0.006 s
+
+TC-14
+
+0.015 s
+
+PASÓ
+
+TC-21
+
+IVA - Fórmula Estándar
+
+0.010 s
+
+PASÓ
+
+TC-23
+
+IVA - Descuento Total
+
+0.009 s
+
+PASÓ
+
+TC-24
+
+IVA - Regla Descuento
+
+0.009 s
+
+PASÓ
+
+TC-25
+
+IVA - Descuento Inválido
+
+0.006 s
+
+PASÓ
+
+TC-26
+
+IVA - Cantidad Nula
+
+Subt = $140, IVA = $21,
+Tot = $161.
+Subt = $134,43, IVA =
+$20,16, Tot = $154,59.
+Subtotal, IVA y Total en
+$0.00.
+Rechazo
+con
+ValidationError.
+Rechazo por validación
+CHECK.
+Rechazo
+con
+ValidationError.
+Rechazo por lı́mite de volumen.
+
+PASÓ
+
+IVA - Redondeo Decimal
+
+3 unidades a $50 c/u con $10 descuento. Verificar IVA (15 %).
+7 unidades a $19.99 con $5.50 descuento (centavos fraccionarios).
+Descuento del 100 % del valor base;
+verificar base e impuestos.
+Descuento superior al valor base de
+la transacción.
+Descuento ingresado con valor negativo (−$25).
+Venta registrada con cantidad 0 o
+negativa.
+Cantidad
+de
+venta
+extrema
+(5, 000, 000 unidades).
+
+0.008 s
+
+TC-22
+
+0.007 s
+
+PASÓ
+
+0.007 s
+
+PASÓ
+
+Medición de persistencia unitaria sin
+retardos bloqueantes.
+Procesamiento consecutivo de 10
+ventas secuenciales.
+
+Tiempo total < 0,25 segundos.
+Tiempo acumulado < 0,50
+segundos.
+
+0.009 s
+
+PASÓ
+
+0.067 s
+
+PASÓ
+
+TC-27
+
+IVA - Desbordamiento
+
+TC-28
+
+Rendimiento - Latencia
+
+TC-29
+
+Rendimiento - Lote
+
+Pruebas de Carga y Concurrencia con generador.py y api.py
+
+Para verificar la resiliencia del módulo ante tráfico concurrente, se articularon dos componentes:
+1. Controlador REST (api.py): Expone los endpoints HTTP POST /api/clientes, /api/productos
+y /api/ventas en Odoo para procesar cargas JSON públicas.
+2. Generador de Carga (generador.py): Script cliente en Python que emplea 20 hilos simultáneos
+(ThreadPoolExecutor) para inyectar 100 clientes, 100 productos y 2000 ventas con datos anómalos.
+El script introduce casos de estrés intencionales: 10 clientes con cédula duplicada, productos con stock
+negativo y 2000 ventas con cantidades nulas, negativas o que exceden el stock disponible.
+
+14
+
+UNIVERSIDAD TÉCNICA DE AMBATO
+FACULTAD DE INGENIERÍA EN SISTEMAS ELECTRÓNICA E
+INDUSTRIAL
+CARRERA DE SOFTWARE
+PERIODO ACADÉMICO: JULIO – DICIEMBRE 2026
+
+generador.py
+Modelos Odoo ORM
+api.py (Controlador)sudo().create()
+HTTP POST (JSON)
+20 Hilos Concurrentes
+Validaciones
+Endpoints REST HTTP
+(Clientes, ProSQL y Python
+POST /api/ventas, etc.
+ductos, Ventas)
+techstore.venta, etc.
+
+Figura 5: Arquitectura de prueba de concurrencia y carga masiva.
+Tabla 5: Resultados de la prueba de carga concurrente con generador.py (20 hilos).
+
+Fase de Carga
+
+Volumen y Patrón
+
+Lı́nea Base (Sin SQA)
+
+Versión
+Remediada
+(Con SQA)
+
+Clientes
+
+100 registros (90 únicos, 10
+duplicados)
+
+Productos
+
+100 registros (con stock negativo)
+
+Ventas
+
+2000 ventas concurrentes
+
+Rendimiento
+
+20 hilos simultáneos
+
+100 insertados. Permitió
+duplicidad de cédulas sin
+restricción.
+100 insertados. Permitió inventarios con saldo negativo.
+Latencia > 3,5 s por retardo forzado. Ventas sin existencias.
+Cuello de botella severo en
+los procesos del servidor.
+
+90 insertados, 10 rechazados por violación de unicidad.
+Productos con stock negativo rechazados por restricción CHECK.
+Rechazo inmediato de cantidades ≤ 0 y sobregiros de
+stock.
+Latencia inferior a 25 ms
+por transacción sin bloqueos.
+
+5.
+
+Métricas de Calidad y Mejora Continua del Proceso
+
+Para solucionar la carencia de métricas y de mejora formal señalada en el caso, se implementó un marco
+de medición cuantitativa basado en las mejores prácticas de SQA [4].
+
+5.1.
+
+Definición y Cálculo de Métricas Cuantitativas
+
+1. Densidad de Defectos (Defect Density - DD):
+DD =
+
+Número Total de Defectos
+KLOC (Miles de Lı́neas de Código)
+
+(1)
+
+En la versión de lı́nea base, el módulo contaba con aproximadamente 0.15 KLOC y presentaba 6 defectos
+funcionales y de rendimiento crı́ticos, arrojando una densidad de DDinicial = 40,0 defectos/KLOC. En
+la versión remediada, con 0.35 KLOC (incluyendo validadores y pruebas) y 0 defectos residuales tras
+el ciclo de prueba, la densidad post-release es DDfinal = 0,0 defectos/KLOC.
+2. Eficiencia en la Remoción de Defectos (Defect Removal Efficiency - DRE):
+DRE =
+
+Dpruebas
+× 100 %
+Dpruebas + Doperación
+
+(2)
+
+Donde Dpruebas son los defectos corregidos antes de la entrega y Doperación son los defectos que alcanzan
+a los usuarios en producción. Con la baterı́a de pruebas unitarias implementada, el indicador alcanza
+el 100 %, evitando el escape de anomalı́as al usuario.
+15
+
+UNIVERSIDAD TÉCNICA DE AMBATO
+FACULTAD DE INGENIERÍA EN SISTEMAS ELECTRÓNICA E
+INDUSTRIAL
+CARRERA DE SOFTWARE
+PERIODO ACADÉMICO: JULIO – DICIEMBRE 2026
+
+3. Tiempo Medio de Respuesta Transaccional (Latency): Mide el tiempo promedio requerido por
+el servidor Odoo para procesar y persistir una venta. Pasó de 1.85 segundos (con picos de 3.60 s) a
+0.018 segundos (< 20 ms).
+
+5.2.
+
+Plan de Mejora Continua (Ciclo PDCA)
+
+Para asegurar la sostenibilidad del proceso de desarrollo en TechStore, se formalizó el ciclo PDCA:
+Planificar (Plan): Levantar y documentar formalmente las reglas de negocio (polı́ticas de inventario
+y normativas fiscales vigentes) antes de escribir código.
+Hacer (Do): Desarrollar bajo convenciones oficiales de Odoo, aplicando restricciones SQL preventivas
+y validadores de integridad en el ORM.
+Verificar (Check): Ejecutar la suite automatizada de pruebas unitarias (TransactionCase) y verificar
+el rendimiento transaccional bajo concurrencia.
+Actuar (Act): Analizar las métricas obtenidas en cada iteración para actualizar guı́as de codificación
+y prevenir la reaparición de fallas.
+
+6.
+
+Resultados Comparativos
+
+La Tabla 6 sintetiza la comparación integral entre la Implementación de Lı́nea Base y la Implementación
+Remediada.
+Tabla 6: Comparativa general entre la Implementación de Lı́nea Base y la Versión Remediada.
+
+Criterio / Indicador
+
+Implementación
+Base
+
+Lı́nea
+
+Implementación Remediada
+
+Control de Clientes Duplicados
+
+Nulo; admite cédulas y correos
+repetidos sin advertencia.
+
+Integridad de Inventario
+
+Permite venta de existencias nulas y stock negativo.
+
+Cálculo de Subtotal e IVA
+
+Subtotal mediante suma; IVA al
+5 %; precio duplicado si cant > 5.
+
+Tiempo Promedio de Respuesta
+Cobertura de Pruebas
+
+≈
+1,85 s (afectado por
+time.sleep).
+0 % (Sin pruebas documentadas).
+Nivel 1 (Inicial - Solo programar).
+
+Restricción SQL de unicidad,
+validación de 10/13 dı́gitos en
+cédula, exclusión de números en
+nombres y 10 dı́gitos en teléfono.
+Restricciones CHECK en producto y validación preventiva al
+vender.
+Subtotal exacto por producto;
+IVA legal al 15 %; redondeo consistente.
+0,018 s (< 20 ms), reducción superior al 99 %.
+100 % (29 pruebas unitarias con
+TransactionCase).
+Nivel 2 (Gestionado - Programar
+y probar).
+
+Nivel de Madurez CMMI
+
+16
+
+de
+
+UNIVERSIDAD TÉCNICA DE AMBATO
+FACULTAD DE INGENIERÍA EN SISTEMAS ELECTRÓNICA E
+INDUSTRIAL
+CARRERA DE SOFTWARE
+PERIODO ACADÉMICO: JULIO – DICIEMBRE 2026
+
+7.
+
+Conclusiones y Recomendaciones
+
+7.1.
+
+Conclusiones
+
+1. La articulación de los estándares ISO/IEC 12207, ISO/IEC 25010 y el modelo CMMI v2.0 proporcionó
+una base metodológica sólida para diagnosticar con precisión y corregir integralmente las deficiencias
+del módulo de ventas de TechStore.
+2. El análisis demostró que las fallas del sistema no eran errores aislados de codificación, sino la consecuencia directa de omisiones en las fases de análisis, diseño y pruebas del ciclo de vida, confirmando
+que la calidad del proceso condiciona la calidad del producto final.
+3. La corrección de las fórmulas matemáticas, el ajuste del IVA a la tasa legal vigente del 15 % y la
+incorporación de restricciones de unicidad e inventario blindaron la operación de la empresa frente a
+riesgos fiscales y pérdidas comerciales.
+4. La supresión de llamadas bloqueantes optimizó los tiempos de respuesta del servidor en más del 99 %,
+garantizando estabilidad ante cargas concurrentes masivas de 20 hilos.
+5. La incorporación de la suite de pruebas unitarias automatizadas y el cálculo de métricas de densidad
+de defectos permitieron elevar la madurez del proceso de desarrollo de TechStore del Nivel 1 (Inicial)
+al Nivel 2 (Gestionado) de CMMI.
+
+7.2.
+
+Recomendaciones
+
+1. Integrar la ejecución obligatoria de las pruebas unitarias dentro de un flujo de integración continua
+(CI/CD) previo a cualquier despliegue en entornos de producción.
+2. Mantener un registro histórico periódico de la densidad de defectos y tiempos de respuesta para habilitar
+la transición hacia el Nivel 3 (Definido) y Nivel 4 (Gestionado Cuantitativamente) de CMMI.
+3. Aplicar análisis estático de código mediante herramientas como SonarQube para asegurar el cumplimiento continuo de estándares de calidad y seguridad en Odoo.
+
+Referencias
+[1] ISO/IEC 25010:2011 Systems and software engineering – Systems and software Quality Requirements
+and Evaluation (SQuaRE) – System and software quality models, 2011.
+[2] ISO/IEC/IEEE 12207:2017 Systems and software engineering – Software life cycle processes, 2017.
+[3] CMMI Institute. CMMI v2.0: Model Overview and Process Areas. ISACA, Pittsburgh, PA, 2018.
+[4] Stephen H. Kan. Metrics and Models in Software Quality Engineering. Addison-Wesley Professional, 2nd
+edition, 2002.
+[5] Roger S. Pressman and Bruce R. Maxim. Software Engineering: A Practitioner’s Approach. McGraw-Hill
+Education, 8th edition, 2014.
+[6] Ian Sommerville. Software Engineering. Addison-Wesley, 9th edition, 2011.
+
+17
+
+

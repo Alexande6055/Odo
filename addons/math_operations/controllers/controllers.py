@@ -54,11 +54,12 @@ class MathOperationApi(http.Controller):
         try:
             vals = {
                 'operand_1': operand_1,
-                'operand_2': operand_2,
+                'operand_2': operand_2 if operand_2 is not None else 0.0,
                 'operation_type': operation_type,
                 'notes': notes,
             }
             rec = request.env['math.operations.clase'].sudo().create(vals)
+            request.env.cr.flush()
             return {
                 'success': True,
                 'message': 'Operación creada correctamente',

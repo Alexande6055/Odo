@@ -1,0 +1,970 @@
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+
+Contenidos
+-
+
+Calidad del producto de software aplicando los fundamentos y herramientas
+Herramientas de mejora de la calidad
+Herramientas de gestión de la calidad
+Otras herramientas importantes
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Calidad del producto de software aplicando los fundamentos y herramientas
+
+¿Qué es la calidad del producto de software?
+
+La calidad del producto de software es el grado en que un sistema cumple con:
+• Requisitos funcionales
+• Requisitos no funcionales
+• Expectativas del usuario
+• Condiciones de uso reales
+
+Un software es de calidad cuando funciona bien, no falla, es fácil de usar y resuelve el problema correctamente.
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Calidad del producto de software aplicando los fundamentos y herramientas
+
+ENFOQUE CLAVE: CALIDAD ≠ SOLO PRUEBAS
+
+Enfoque incorrecto
+
+Enfoque correcto
+
+Calidad = testing
+
+Calidad = diseño + desarrollo + pruebas + mejora
+
+Solo QA
+
+Toda la organización
+
+Detectar errores
+
+Prevenir errores
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Calidad del producto de software
+aplicando los fundamentos y
+herramientas
+MODELO ISO/IEC 25010
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Calidad del producto de software aplicando los fundamentos y herramientas
+
+FUNDAMENTOS PARA LOGRAR CALIDAD
+Validación vs Verificación
+
+Concepto
+
+Pregunta clave
+
+Verificación
+
+¿Está bien construido?
+
+Validación
+
+¿Construimos lo correcto?
+
+Ejemplo en Odoo:
+• Verificación → unittest pasa
+• Validación → ¿el usuario realmente necesita esa operación?
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Calidad del producto de software aplicando los fundamentos y herramientas
+
+FUNDAMENTOS PARA LOGRAR CALIDAD
+Prevención vs detección
+Tipo
+
+Ejemplo
+
+Prevención
+
+Validar antes de guardar
+
+Detección
+
+Test detecta error
+
+La calidad moderna se enfoca en prevención
+
+• Menor costo → arreglar después es más caro
+• Ahorra tiempo → no rehaces trabajo
+• Mejor experiencia → el usuario no ve fallos
+• Software más estable → menos bugs
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Calidad del producto de software aplicando los fundamentos y herramientas
+
+FUNDAMENTOS PARA LOGRAR CALIDAD
+Requisitos funcionales vs no funcionales
+Funcionales:
+• Sumar
+• Restar
+
+Ejemplo
+Funcional:
+El sistema permite dividir números (10 ÷ 2 = 5)
+
+No funcionales:
+• Seguridad
+• Rendimiento
+• Escalabilidad
+
+No funcional:
+• Responde rápido
+• No falla
+• Es seguro
+
+Un sistema puede funcionar (funcional), pero si es lento o falla, no tiene calidad (no funcional).
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Calidad del producto de software aplicando los fundamentos y herramientas
+
+HERRAMIENTAS APLICADAS
+Checklist de calidad
+
+Criterio
+Manejo de errores
+Validaciones
+Pruebas
+
+Cumple
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Calidad del producto de software aplicando los fundamentos y herramientas
+HERRAMIENTAS APLICADAS
+Casos de prueba (Test Cases)
+
+Caso
+
+Entrada
+
+Resultado esperado
+
+División
+
+10 / 2
+
+5
+
+División error
+
+10 / 0
+
+Error
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Calidad del producto de software aplicando los fundamentos y herramientas
+
+HERRAMIENTAS APLICADAS
+Métricas básicas
+• Número de errores
+• Cobertura de pruebas
+• Tiempo de respuesta
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Calidad del producto de software aplicando los fundamentos y herramientas
+import time
+from odoo.tests.common import TransactionCase
+class TestMathOperationTime(TransactionCase):
+def setUp(self):
+super().setUp()
+self.MathOperation = self.env['math.operations']
+def test_division_response_time(self):
+inicio = time. perf_counter()
+rec = self.MathOperation.create({
+'operand_1': 100,
+'operand_2': 5,
+'operation_type': 'division'
+})
+fin = time. perf_counter()
+tiempo = fin - inicio
+self.assertEqual(rec.result, 20)
+self.assertLess(tiempo, 1) # debe responder en menos de 1 segundo
+print(f"Tiempo de respuesta: {tiempo:.4f} segundos")
+
+Tiempo de respuesta
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Calidad del producto de software aplicando los fundamentos y herramientas
+Tiempo de respuesta
+Taller en cada método creado van a agregar el tiempo de respuesta y van a realizar respectivo test con
+cada operación
+- Evaluar el test en su propia portátil
+- Evaluar las mismas 100 operaciones juntamente con su compañero
+- Evaluar el test
+- ¿Quién se demora más?
+
+Determinar conclusiones en función a los resultados obtenidos
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Calidad del producto de software aplicando los fundamentos y herramientas
+Supón que ejecutaste las pruebas y obtuviste esto:
+• 5 pruebas ejecutadas
+• 1 prueba falló
+• 4 funcionalidades cubiertas de 5
+• tiempo promedio: 0.6 segundos
+
+Métrica
+
+Las métricas permiten evaluar la calidad con datos reales:
+• menos errores = mejor calidad
+• mayor cobertura = más confianza
+• menor tiempo = mejor rendimiento
+
+Resultado
+
+Número de errores
+
+1
+
+Cobertura de pruebas
+
+80%
+
+Tiempo de respuesta
+
+0.6 s
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Calidad del producto de software aplicando los fundamentos y herramientas
+
+APLICACIÓN
+Caso: Módulo de operaciones
+
+Característica
+
+Evaluación
+
+Funcionalidad
+
+operaciones correctas
+
+Fiabilidad
+
+error división
+
+Usabilidad
+
+mensaje mejorable
+
+Seguridad
+
+validaciones
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Calidad del producto de software aplicando los fundamentos y herramientas
+
+CICLO COMPLETO DE CALIDAD
+Flujo real:
+1. Requisitos
+2. Diseño
+3. Desarrollo
+4. Pruebas
+5. Mejora
+
+La calidad no es una etapa, es un proceso continuo
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Herramientas de mejora de la calidad
+Mejorar calidad = reducir errores + optimizar procesos
+
+CICLO PDCA
+Plan – Do – Check – Act
+Fase
+
+Qué significa
+
+Ejemplo en Odoo
+
+Plan
+
+Planificar mejora
+
+Detectar error en división
+
+Do
+
+Implementar
+
+Agregar validación
+
+Check
+
+Verificar
+
+Ejecutar unittest
+
+Act
+
+Mejorar
+
+Ajustar mensajes
+
+Primero detecto el problema, luego lo corrijo, verifico y lo dejo mejor que antes
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Herramientas de mejora de la calidad
+Ejemplo
+
+PROBLEMA DEL CASO
+El sistema permite dividir por cero y devuelve 0 como resultado
+
+Esto es un error crítico, porque:
+• El resultado es incorrecto
+• No alerta al usuario
+• Afecta la confiabilidad (ISO 25010 → fiabilidad)
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Herramientas de mejora de la calidad
+Ejemplo
+1. PLAN (PLANIFICAR)
+Identificación del problema
+Se detecta que:
+if b == 0:
+return 0
+
+2. DO (HACER)
+Ejecutar pruebas
+Caso 1:
+10 / 2 = 5
+
+#
+
+Análisis
+• Matemáticamente no se puede dividir para cero
+• El sistema no valida entrada
+• Error oculto (grave en producción)
+
+Caso 2:
+10 / 0 = 0
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Herramientas de mejora de la calidad
+Ejemplo
+3. CHECK (VERIFICAR)
+Evaluación
+• El sistema falla en casos críticos
+• No hay validación
+• No existen pruebas unitarias
+
+4. ACT (ACTUAR)
+Solución propuesta
+Implementar validación:
+if b == 0:
+raise ValidationError("No se puede
+dividir para cero")
+
+Conclusión
+- El sistema no cumple calidad funcional ni fiabilidad
+Nueva prueba
+Caso corregido: 10 / 0
+
+PDCA no es solo teoría… es un ciclo que usamos para mejorar software real paso a paso
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Herramientas de mejora de la calidad
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Herramientas de mejora de la calidad
+Mejorar calidad = reducir errores + optimizar procesos
+
+DIAGRAMA DE ISHIKAWA (CAUSA–EFECTO)
+Encontrar por qué ocurre un error
+Problema:
+División falla
+Causas:
+• Código mal diseñado
+• Falta de validación
+• Pruebas incompletas
+
+No solo arreglamos el error… entendemos por qué ocurrió
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Herramientas de mejora de la calidad
+Mejorar calidad = reducir errores + optimizar procesos
+
+DIAGRAMA DE PARETO (80/20)
+El 80% de los problemas vienen del 20% de causas
+Ejemplo
+Errores en sistema:
+División → 70%
+Otros → 30%
+Solución:
+Priorizar división
+
+No todos los errores son igual de importantes
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Herramientas de mejora de la calidad
+Mejorar calidad = reducir errores + optimizar procesos
+SIX SIGMA (MEJORA BASADA EN DATOS)
+DMAIC - Definir Medir Analizar Mejorar Controlar
+Fase
+
+Ejemplo en Odoo
+
+Definir
+
+Error división por cero
+
+Medir
+
+3 errores en pruebas
+
+Analizar
+
+Falta validación
+
+Mejorar
+
+Código corregido
+
+Controlar
+
+Test automático
+
+No mejoramos por intuición, mejoramos con datos
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Herramientas de mejora de la calidad
+Ejemplo
+El sistema presenta errores en operaciones matemáticas (división, promedio, porcentaje)
+
+Esto afecta:
+• Confiabilidad
+• Exactitud de resultados
+• Experiencia del usuario
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Herramientas de mejora de la calidad
+Ejemplo
+El sistema presenta errores en operaciones matemáticas (división, promedio, porcentaje)
+
+1. DEFINE (Definir)
+Problema
+El módulo de operaciones en Odoo presenta resultados incorrectos en varias
+operaciones matemáticas.
+
+Objetivo
+- Reducir los errores en cálculos al 0% o lo más cercano posible
+
+Alcance
+• Operaciones: división, promedio, porcentaje
+• Usuarios: estudiantes / usuarios del sistema
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Herramientas de mejora de la calidad
+Ejemplo
+El sistema presenta errores en operaciones matemáticas (división, promedio, porcentaje)
+2. MEASURE (Medir)
+Datos obtenidos en pruebas
+Se ejecutan 50 operaciones:
+
+Tipo de operación
+
+Total pruebas
+
+Errores
+
+División
+
+20
+
+10
+
+Promedio
+
+15
+
+5
+
+Porcentaje
+
+15
+
+5
+
+Cálculo de defectos
+• Total errores = 20
+• Total operaciones = 50
+Tasa de error = 40%
+Muy alto (sistema de baja calidad)
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Herramientas de mejora de la calidad
+Ejemplo
+El sistema presenta errores en operaciones matemáticas (división, promedio, porcentaje)
+3. ANALYZE (Analizar)
+Identificación de causas
+Con base en pruebas:
+• División → no valida división por cero
+• Promedio → fórmula incorrecta
+• Porcentaje → fórmula incorrecta
+Herramientas usadas
+Ishikawa:
+• Falta de validaciones
+• Error lógico
+Pareto:
+• División = mayor problema
+
+Conclusión
+Las causas principales son:
+• Errores de lógica
+• Falta de validación
+• Ausencia de pruebas
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Herramientas de mejora de la calidad
+Ejemplo
+El sistema presenta errores en operaciones matemáticas (división, promedio, porcentaje)
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Herramientas de mejora de la calidad
+Ejemplo
+El sistema presenta errores en operaciones matemáticas (división, promedio, porcentaje)
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Herramientas de mejora de la calidad
+Ejemplo
+El sistema presenta errores en operaciones matemáticas (división, promedio, porcentaje)
+
+4. IMPROVE (Mejorar)
+Soluciones implementadas
+- División
+if b == 0:
+raise ValidationError("No permitido")
+
+- Promedio
+resultado = (a + b) / 2
+
+- Porcentaje
+resultado = a * b / 100
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Herramientas de mejora de la calidad
+Ejemplo
+El sistema presenta errores en operaciones matemáticas (división, promedio, porcentaje)
+5. CONTROL (Controlar)
+Acciones de control
+• Pruebas unitarias en Odoo
+• Validaciones en código
+• Logs de errores
+• Revisión de código
+
+Medición posterior
+Nuevas pruebas:
+• 50 operaciones
+• 0 errores
+Tasa de error = 0%
+Mejora total
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Herramientas de mejora de la calidad
+Ejemplo
+El sistema presenta errores en operaciones matemáticas (división, promedio, porcentaje)
+
+Six Sigma no solo detecta errores… los mide, los analiza y los reduce hasta casi eliminarlos
+
+PDCA
+
+Six Sigma
+
+Mejora continua
+
+Mejora basada en datos
+
+General
+
+Enfocado en métricas
+
+Más simple
+
+Más estructurado
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Taller
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Taller
+
+Este sistema contiene errores intencionales para fines académicos. No representa buenas prácticas
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Taller
+
+En función a las nuevas funcionalidades implementadas en el módulo de operaciones de Odoo, se ha detectado que
+el sistema presenta posibles inconsistencias y errores en su funcionamiento.
+Se solicita realizar un proceso de evaluación y mejora de la calidad del sistema aplicando las siguientes
+herramientas:
+• Ciclo PDCA
+• Metodología Six Sigma (DMAIC)
+• Diagrama de Ishikawa
+• Diagrama de Pareto
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Taller
+Actividades a desarrollar
+
+Pruebas del sistema
+• Ejecutar diferentes casos de prueba sobre las nuevas operaciones implementadas.
+• Registrar los errores encontrados (tipo, frecuencia, impacto).
+
+Análisis de causa raíz (Ishikawa)
+• Construir un diagrama de Ishikawa para identificar las posibles causas de los errores detectados.
+
+Priorización de problemas (Pareto)
+• Elaborar una tabla de frecuencia de errores.
+• Construir el diagrama de Pareto.
+• Identificar el 20% de errores que generan el 80% de problemas.
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Taller
+Actividades a desarrollar
+
+Aplicación del ciclo PDCA
+• Plan: Definir el problema principal
+• Do: Implementar mejoras
+• Check: Analizar resultados
+• Act: Proponer mejoras
+Aplicación de Six Sigma (DMAIC)
+• Define: Problema identificado
+• Measure: Métricas de errores
+• Analyze: Causas (usar Ishikawa + Pareto)
+• Improve: Propuesta de solución
+• Control: Estrategia para evitar recurrencia
+Propuesta de mejora
+• Corregir al menos 2 errores detectados en el código
+• Justificar la solución aplicada
+
+•
+•
+•
+•
+
+Ishikawa → diagnóstico
+Pareto → prioridad
+PDCA → solución
+DMAIC → optimización
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Taller
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Taller
+Se prioriza lo que genera MÁS impacto, no solo lo que aparece
+primero
+Operación
+
+Errores
+
+%
+
+% Acumulado
+
+division
+
+1
+
+20%
+
+20%
+
+avg
+
+1
+
+20%
+
+40%
+
+pow
+
+1
+
+20%
+
+60%
+
+sqrt
+
+1
+
+20%
+
+80%
+
+percent
+
+1
+
+20%
+
+100%
+
+A diferencia de un Pareto típico:
+• No hay una operación dominante
+• El problema es general del sistema
+
+• pow y sqrt → errores de código (CRÍTICOS)
+• percent y avg → errores lógicos
+• division → error de validación
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Taller
+Entregar
+•
+•
+•
+•
+•
+•
+•
+
+Registro de pruebas realizadas
+Lista de errores encontrados
+Diagrama de Ishikawa
+Tabla + gráfico de Pareto
+Aplicación del PDCA
+Aplicación de Six Sigma
+Código corregido (mínimo 2 casos)
+
+Los diagramas deben basarse en evidencia real obtenida de las
+pruebas realizadas, no en supuestos.
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Herramientas de gestión de la calidad
+Controlar, organizar y asegurar la calidad del software durante todo el proceso
+QA vs QC
+
+QA (Quality Assurance)
+- Previene errores
+- Se enfoca en el proceso
+Ejemplo:
+• Definir estándares
+• Revisar código
+• Buen diseño
+
+QC (Quality Control)
+- Detecta errores
+- Se enfoca en el producto
+Ejemplo:
+• Pruebas
+• Test unittest
+Tipo
+
+Qué hace
+
+QA
+
+Evita errores
+
+QC
+
+Encuentra errores
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Herramientas de gestión de la calidad
+Controlar, organizar y asegurar la calidad del software durante todo el proceso
+MÉTRICAS DE CALIDAD
+Tomar decisiones
+Ejemplos
+• Número de errores
+• Cobertura de pruebas
+• Tiempo de respuesta
+Métrica
+
+Resultado
+
+Errores
+
+2
+
+Cobertura
+
+80%
+
+Tiempo
+
+0.6s
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Herramientas de gestión de la calidad
+Controlar, organizar y asegurar la calidad del software durante todo el proceso
+CHECKLIST DE CALIDAD
+Asegurar que todo se cumpla
+
+Criterio
+Validaciones
+Manejo errores
+Pruebas
+
+Estado
+
+• Antes de entregar software
+• Durante desarrollo
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Herramientas de gestión de la calidad
+Controlar, organizar y asegurar la calidad del software durante todo el proceso
+AUDITORÍAS DE CALIDAD
+Revisar si el proceso cumple estándares
+
+Revisar:
+• Código
+• Pruebas
+• Seguridad
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Herramientas de gestión de la calidad
+Controlar, organizar y asegurar la calidad del software durante todo el proceso
+CONTROL DE CALIDAD CONTINUO
+Revisar constantemente
+
+Ejemplo en Odoo
+• Cada cambio → pruebas
+• Cada error → análisis
+• Cada mejora → validación
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Herramientas de gestión de la calidad
+Controlar, organizar y asegurar la calidad del software durante todo el proceso
+ESTANDARIZACIÓN
+Definir reglas claras
+
+Ejemplo
+• Todos los errores deben validarse
+• Todos los módulos deben tener pruebas
+
+Beneficio:
+Consistencia
+Menos errores
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Herramientas de gestión de la calidad
+Controlar, organizar y asegurar la calidad del software durante todo el proceso
+CASO COMPLETO
+Sistema falla en división
+
+Herramienta
+
+Uso
+
+QA
+
+Definir validaciones
+
+QC
+
+Detectar error
+
+Métricas
+
+Medir fallos
+
+Checklist
+
+Verificar
+
+Auditoría
+
+Revisar proceso
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Otras herramientas importantes
+Ya no todo se hace manual… la calidad ahora se apoya en herramientas inteligentes
+
+Revisan el código automáticamente
+• Detectan errores
+• Detectan malas prácticas
+• Sugieren mejoras
+
+Unidad 2 - Fundamentos y herramientas para la calidad del producto.
+Otras herramientas importantes
+Tipo de herramienta
+
+¿Qué hacen?
+
+Ejemplos
+
+Resumen corto
+
+Análisis de código
+
+Revisan el código
+automáticamente
+
+SonarQube,
+CodeClimate, ESLint
+
+Detectan errores y malas
+prácticas
+
+IA aplicada
+
+Generan y mejoran
+código/pruebas
+
+ChatGPT, GitHub Copilot,
+CodeWhisperer
+
+Automatizan y apoyan el
+desarrollo
+
+Pruebas
+automatizadas
+
+Ejecutan tests
+automáticamente
+
+unittest, pytest, JUnit
+
+Verifican que el sistema
+funcione
+
+Pruebas de API
+
+Prueban servicios web
+
+Postman, Insomnia,
+SoapUI
+
+Simulan peticiones reales
+
+Monitoreo
+
+Detectan errores en
+tiempo real
+
+Grafana, Kibana,
+Prometheus
+
+Vigilan el sistema en
+producción
+
+CI/CD
+
+Automatizan pruebas y GitHub Actions, GitLab
+despliegues
+CI, Jenkins
+
+Controlan calidad en cada
+cambio
+
+CI/CD combina dos prácticas principales: Integración Continua (CI) y Entrega/Implementación Continua (CD)
+
+Unidad 1 - Fundamentos generales de la calidad de software
+
+Deber Unidad 2
+
+
