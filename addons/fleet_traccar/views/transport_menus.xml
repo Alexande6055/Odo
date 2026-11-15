@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- MENÚ PRINCIPAL RAÍZ: Transporte Universitario -->
+    <menuitem id="menu_transport_root"
+              name="Transporte Universitario"
+              sequence="25"
+              web_icon="fleet_traccar,static/description/icon.png"/>
+
+    <!-- SECCIÓN 1: OPERACIONES -->
+    <menuitem id="menu_transport_operations"
+              name="Operaciones y Seguimiento"
+              parent="menu_transport_root"
+              sequence="10"/>
+
+    <menuitem id="menu_transport_trip_action"
+              name="Recorridos y Asignaciones"
+              parent="menu_transport_operations"
+              action="action_transport_trip"
+              sequence="10"/>
+
+    <menuitem id="menu_transport_incident_action"
+              name="Incidencias y Desvíos"
+              parent="menu_transport_operations"
+              action="action_transport_trip_incident"
+              sequence="20"/>
+
+    <!-- SECCIÓN 2: PLANIFICACIÓN DE RUTAS -->
+    <menuitem id="menu_transport_routes_group"
+              name="Rutas y Paradas"
+              parent="menu_transport_root"
+              sequence="20"/>
+
+    <menuitem id="menu_transport_route_action"
+              name="Gestión de Rutas"
+              parent="menu_transport_routes_group"
+              action="action_transport_route"
+              sequence="10"/>
+
+    <!-- SECCIÓN 3: MÉTRICAS Y CALIDAD (DASHBOARD) -->
+    <menuitem id="menu_transport_analytics_group"
+              name="Métricas y Calidad"
+              parent="menu_transport_root"
+              sequence="30"/>
+
+    <menuitem id="menu_transport_metrics_action"
+              name="Panel de Indicadores (Dashboard)"
+              parent="menu_transport_analytics_group"
+              action="action_transport_metrics_summary"
+              sequence="10"/>
+
+    <!-- SECCIÓN 4: VEHÍCULOS Y CONFIGURACIÓN -->
+    <menuitem id="menu_transport_fleet_group"
+              name="Flota y Configuración"
+              parent="menu_transport_root"
+              sequence="40"/>
+
+    <menuitem id="menu_transport_fleet_vehicles_action"
+              name="Vehículos y GPS"
+              parent="menu_transport_fleet_group"
+              action="fleet.fleet_vehicle_action"
+              sequence="10"/>
+
+    <menuitem id="menu_transport_config_settings_action"
+              name="Ajustes Traccar"
+              parent="menu_transport_fleet_group"
+              action="fleet.fleet_config_settings_action"
+              sequence="20"/>
+</odoo>
+

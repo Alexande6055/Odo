@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- VISTA ÁRBOL (TREE) DE RUTAS -->
+    <record id="view_transport_route_tree" model="ir.ui.view">
+        <field name="name">transport.route.tree</field>
+        <field name="model">transport.route</field>
+        <field name="arch" type="xml">
+            <tree string="Rutas de Transporte Universitario">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="origin"/>
+                <field name="destination"/>
+                <field name="estimated_distance" sum="Total km"/>
+                <field name="estimated_duration"/>
+                <field name="stop_count"/>
+                <field name="trip_count"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- VISTA FORMULARIO DE RUTAS -->
+    <record id="view_transport_route_form" model="ir.ui.view">
+        <field name="name">transport.route.form</field>
+        <field name="model">transport.route</field>
+        <field name="arch" type="xml">
+            <form string="Ruta de Transporte Universitario">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="code" string="Código de Ruta"/>
+                        <h1>
+                            <field name="code" placeholder="Ej. UTA-R01" class="oe_inline"/>
+                        </h1>
+                        <label for="name" string="Nombre Descriptivo"/>
+                        <h2>
+                            <field name="name" placeholder="Ej. Ruta 1: Campus Huachi - Campus Ingahurco"/>
+                        </h2>
+                    </div>
+
+                    <group>
+                        <group string="Trayecto y Distancias">
+                            <field name="origin"/>
+                            <field name="destination"/>
+                            <field name="estimated_distance"/>
+                            <field name="estimated_duration"/>
+                        </group>
+                        <group string="Parámetros de Tolerancia">
+                            <field name="allowed_deviation_meters"/>
+                            <field name="active"/>
+                            <field name="color" widget="color_picker"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Puntos de Control / Paradas Programadas" name="stops">
+                            <field name="stop_ids">
+                                <tree editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="latitude"/>
+                                    <field name="longitude"/>
+                                    <field name="expected_offset_minutes"/>
+                                    <field name="proximity_radius"/>
+                                    <field name="time_tolerance"/>
+                                    <field name="is_mandatory"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <page string="Coordenadas del Trazado Base" name="coordinates">
+                            <group>
+                                <field name="reference_coordinates" widget="text" placeholder="[[-1.2687,-78.6258],[-1.2605,-78.6242],...]"/>
+                            </group>
+                        </page>
+
+                        <page string="Notas y Descripción" name="notes">
+                            <field name="description" placeholder="Información adicional sobre la ruta, paradas y consideraciones operativas..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- VISTA BÚSQUEDA DE RUTAS -->
+    <record id="view_transport_route_search" model="ir.ui.view">
+        <field name="name">transport.route.search</field>
+        <field name="model">transport.route</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Rutas">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="origin"/>
+                <field name="destination"/>
+                <filter string="Activas" name="filter_active" domain="[('active', '=', True)]"/>
+                <filter string="Inactivas" name="filter_inactive" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ACCIÓN DE VENTANA PARA RUTAS -->
+    <record id="action_transport_route" model="ir.actions.act_window">
+        <field name="name">Gestión de Rutas</field>
+        <field name="res_model">transport.route</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_transport_route_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Cree una nueva ruta de transporte universitario.
+            </p>
+            <p>
+                Defina el origen, destino, puntos de control georreferenciados y tiempos estimados de viaje.
+            </p>
+        </field>
+    </record>
+</odoo>
+

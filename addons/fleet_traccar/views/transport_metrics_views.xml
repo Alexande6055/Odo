@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- VISTA ÁRBOL DE RESÚMENES DE MÉTRICAS -->
+    <record id="view_transport_metrics_summary_tree" model="ir.ui.view">
+        <field name="name">transport.metrics.summary.tree</field>
+        <field name="model">transport.metrics.summary</field>
+        <field name="arch" type="xml">
+            <tree string="Evaluaciones de Calidad y Métricas">
+                <field name="calculation_date"/>
+                <field name="name"/>
+                <field name="route_id"/>
+                <field name="total_trips"/>
+                <field name="m1_route_compliance_rate" string="% Cumplimiento"/>
+                <field name="m2_punctuality_rate" string="% Puntualidad"/>
+                <field name="m3_avg_delay_minutes" string="Retraso Med (min)"/>
+                <field name="m4_stops_compliance_rate" string="% Paradas"/>
+                <field name="cs1_gps_integrity_rate" string="CS1. Integridad"/>
+                <field name="cs3_response_time_ms" string="CS3. Latencia (ms)"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- VISTA FORMULARIO DE MÉTRICAS / DASHBOARD -->
+    <record id="view_transport_metrics_summary_form" model="ir.ui.view">
+        <field name="name">transport.metrics.summary.form</field>
+        <field name="model">transport.metrics.summary</field>
+        <field name="arch" type="xml">
+            <form string="Evaluación de Indicadores de Calidad y Transporte">
+                <header>
+                    <button name="action_compute_all_metrics" 
+                            type="object" 
+                            string="Calcular y Actualizar Indicadores" 
+                            class="btn btn-primary" 
+                            icon="fa-refresh"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Título del Informe de Calidad"/>
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                        <span class="text-muted">Calculado el: <field name="calculation_date" readonly="1" class="oe_inline"/></span>
+                    </div>
+
+                    <group string="Filtros de Análisis">
+                        <group>
+                            <field name="route_id"/>
+                            <field name="vehicle_id"/>
+                        </group>
+                        <group>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                        </group>
+                    </group>
+
+                    <!-- TARJETAS RESUMEN DE INDICADORES PRINCIPALES -->
+                    <div class="row text-center my-3">
+                        <div class="col-md-3">
+                            <div class="card p-3 shadow-sm border-primary">
+                                <span class="text-muted small">1. Cumplimiento Rutas</span>
+                                <h2 class="text-primary mb-0"><field name="m1_route_compliance_rate"/>%</h2>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card p-3 shadow-sm border-info">
+                                <span class="text-muted small">2. Puntualidad Global</span>
+                                <h2 class="text-info mb-0"><field name="m2_punctuality_rate"/>%</h2>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card p-3 shadow-sm border-warning">
+                                <span class="text-muted small">3. Retraso Promedio</span>
+                                <h2 class="text-warning mb-0"><field name="m3_avg_delay_minutes"/> <small class="h6">min</small></h2>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card p-3 shadow-sm border-success">
+                                <span class="text-muted small">4. Cobertura Paradas</span>
+                                <h2 class="text-success mb-0"><field name="m4_stops_compliance_rate"/>%</h2>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row text-center mb-3">
+                        <div class="col-md-3">
+                            <div class="card p-3 shadow-sm border-secondary">
+                                <span class="text-muted small">5. Tasa de Desviación</span>
+                                <h3 class="mb-0"><field name="m5_deviation_rate"/>%</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card p-3 shadow-sm border-secondary">
+                                <span class="text-muted small">6. Dif. Media Distancia</span>
+                                <h3 class="mb-0"><field name="m6_avg_distance_diff"/> <small class="h6">km</small></h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card p-3 shadow-sm border-secondary">
+                                <span class="text-muted small">7. Tiempo Prom. Viaje</span>
+                                <h3 class="mb-0"><field name="m7_avg_duration_minutes"/> <small class="h6">min</small></h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card p-3 shadow-sm border-danger">
+                                <span class="text-muted small">8. Total Incidencias</span>
+                                <h3 class="text-danger mb-0"><field name="m8_total_incidents"/></h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <notebook>
+                        <page string="Ficha Técnica: 8 Métricas de Transporte" name="transport_metrics">
+                            <field name="transport_metrics_notes" widget="html" nolabel="1"/>
+                        </page>
+
+                        <page string="Ficha Técnica: 4 Métricas de Calidad de Software (ISO/IEC 25010)" name="software_metrics">
+                            <div class="row text-center my-2">
+                                <div class="col-md-3">
+                                    <div class="p-2 border rounded bg-light">
+                                        <small class="text-muted d-block">CS1. Integridad GPS</small>
+                                        <strong class="h4 text-success"><field name="cs1_gps_integrity_rate"/>%</strong>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="p-2 border rounded bg-light">
+                                        <small class="text-muted d-block">CS2. Exactitud Sync</small>
+                                        <strong class="h4 text-success"><field name="cs2_sync_accuracy_rate"/>%</strong>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="p-2 border rounded bg-light">
+                                        <small class="text-muted d-block">CS3. Latencia Sistema</small>
+                                        <strong class="h4 text-primary"><field name="cs3_response_time_ms"/> ms</strong>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="p-2 border rounded bg-light">
+                                        <small class="text-muted d-block">CS4. Precisión Detección</small>
+                                        <strong class="h4 text-info"><field name="cs4_incident_detection_accuracy"/>%</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <field name="software_metrics_notes" widget="html" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ACCIÓN DE VENTANA -->
+    <record id="action_transport_metrics_summary" model="ir.actions.act_window">
+        <field name="name">Panel de Indicadores y Calidad</field>
+        <field name="res_model">transport.metrics.summary</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Genere una nueva evaluación de indicadores de calidad y transporte.
+            </p>
+        </field>
+    </record>
+</odoo>
+

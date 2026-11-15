@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- VISTA ÁRBOL DE RECORRIDOS (VIAJES) -->
+    <record id="view_transport_trip_tree" model="ir.ui.view">
+        <field name="name">transport.trip.tree</field>
+        <field name="model">transport.trip</field>
+        <field name="arch" type="xml">
+            <tree string="Recorridos y Viajes de Transporte" 
+                  decoration-info="state == 'in_progress'" 
+                  decoration-success="compliance_status == 'compliant'" 
+                  decoration-warning="compliance_status == 'delayed'" 
+                  decoration-danger="compliance_status == 'non_compliant'">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="vehicle_id"/>
+                <field name="route_id"/>
+                <field name="scheduled_start_time"/>
+                <field name="actual_start_time"/>
+                <field name="duration_real_minutes"/>
+                <field name="actual_distance"/>
+                <field name="delay_minutes"/>
+                <field name="stop_completion_rate" widget="progressbar"/>
+                <field name="state" widget="badge" 
+                       decoration-muted="state == 'draft'" 
+                       decoration-info="state == 'in_progress'" 
+                       decoration-success="state == 'completed'" 
+                       decoration-danger="state == 'cancelled'"/>
+                <field name="compliance_status" widget="badge" 
+                       decoration-success="compliance_status == 'compliant'" 
+                       decoration-warning="compliance_status == 'delayed'" 
+                       decoration-danger="compliance_status == 'non_compliant'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- VISTA KANBAN DE RECORRIDOS -->
+    <record id="view_transport_trip_kanban" model="ir.ui.view">
+        <field name="name">transport.trip.kanban</field>
+        <field name="model">transport.trip</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" quick_create="false">
+                <field name="name"/>
+                <field name="route_id"/>
+                <field name="vehicle_id"/>
+                <field name="date"/>
+                <field name="state"/>
+                <field name="compliance_status"/>
+                <field name="delay_minutes"/>
+                <field name="stop_completion_rate"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click p-3 mb-2 shadow-sm border rounded">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <strong class="h6 mb-0 text-primary"><field name="name"/></strong>
+                                <field name="compliance_status" widget="badge" 
+                                       decoration-success="compliance_status == 'compliant'" 
+                                       decoration-warning="compliance_status == 'delayed'" 
+                                       decoration-danger="compliance_status == 'non_compliant'"/>
+                            </div>
+                            <div class="text-muted small mb-2">
+                                <i class="fa fa-road me-1" title="Ruta"/> <field name="route_id"/><br/>
+                                <i class="fa fa-bus me-1" title="Vehículo"/> <field name="vehicle_id"/><br/>
+                                <i class="fa fa-calendar me-1" title="Fecha"/> <field name="date"/>
+                            </div>
+                            <div class="border-top pt-2 d-flex justify-content-between align-items-center">
+                                <span class="small">
+                                    Retraso: <strong><field name="delay_minutes"/> min</strong>
+                                </span>
+                                <span class="small">
+                                    Paradas: <strong><field name="stop_completion_rate"/>%</strong>
+                                </span>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- VISTA CALENDARIO DE RECORRIDOS -->
+    <record id="view_transport_trip_calendar" model="ir.ui.view">
+        <field name="name">transport.trip.calendar</field>
+        <field name="model">transport.trip</field>
+        <field name="arch" type="xml">
+            <calendar string="Calendario de Recorridos" 
+                      date_start="scheduled_start_time" 
+                      date_stop="scheduled_end_time" 
+                      color="vehicle_id" 
+                      mode="week">
+                <field name="name"/>
+                <field name="route_id"/>
+                <field name="vehicle_id"/>
+                <field name="compliance_status"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- VISTA FORMULARIO DE RECORRIDO (VIAJE) -->
+    <record id="view_transport_trip_form" model="ir.ui.view">
+        <field name="name">transport.trip.form</field>
+        <field name="model">transport.trip</field>
+        <field name="arch" type="xml">
+            <form string="Recorrido de Transporte Universitario">
+                <header>
+                    <button name="action_start_trip" 
+                            type="object" 
+                            string="Iniciar Recorrido" 
+                            class="btn btn-primary" 
+                            icon="fa-play" 
+                            states="draft"/>
+                    <button name="action_sync_points_from_traccar" 
+                            type="object" 
+                            string="Sincronizar GPS Traccar" 
+                            class="btn btn-secondary" 
+                            icon="fa-refresh" 
+                            states="in_progress,completed"/>
+                    <button name="action_analyze_trip" 
+                            type="object" 
+                            string="Evaluar Incidencias Automáticas" 
+                            class="btn btn-info text-white" 
+                            icon="fa-calculator" 
+                            states="in_progress,completed"/>
+                    <button name="action_complete_trip" 
+                            type="object" 
+                            string="Finalizar Recorrido" 
+                            class="btn btn-success" 
+                            icon="fa-check" 
+                            states="in_progress"/>
+                    <button name="action_cancel_trip" 
+                            type="object" 
+                            string="Cancelar" 
+                            states="draft,in_progress"/>
+                    <button name="action_reset_draft" 
+                            type="object" 
+                            string="Volver a Borrador" 
+                            states="cancelled"/>
+
+                    <field name="state" widget="statusbar" statusbar_visible="draft,in_progress,completed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Código del Recorrido"/>
+                        <h1>
+                            <field name="name" class="oe_inline"/>
+                            <field name="compliance_status" widget="badge" class="ms-3" 
+                                   decoration-success="compliance_status == 'compliant'" 
+                                   decoration-warning="compliance_status == 'delayed'" 
+                                   decoration-danger="compliance_status == 'non_compliant'"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Asignación y Planificación">
+                            <field name="route_id" attrs="{'readonly': [('state', 'in', ('completed', 'cancelled'))]}"/>
+                            <field name="vehicle_id" attrs="{'readonly': [('state', 'in', ('completed', 'cancelled'))]}"/>
+                            <field name="driver_id" attrs="{'readonly': [('state', 'in', ('completed', 'cancelled'))]}"/>
+                            <field name="date" attrs="{'readonly': [('state', 'in', ('completed', 'cancelled'))]}"/>
+                        </group>
+                        <group string="Control Horario">
+                            <field name="scheduled_start_time" attrs="{'readonly': [('state', 'in', ('completed', 'cancelled'))]}"/>
+                            <field name="scheduled_end_time" attrs="{'readonly': [('state', 'in', ('completed', 'cancelled'))]}"/>
+                            <field name="actual_start_time" attrs="{'readonly': [('state', '=', 'completed')]}"/>
+                            <field name="actual_end_time" attrs="{'readonly': [('state', '=', 'completed')]}"/>
+                        </group>
+                    </group>
+
+                    <group string="Métricas del Recorrido Calculadas">
+                        <group>
+                            <field name="estimated_distance"/>
+                            <field name="actual_distance"/>
+                            <field name="distance_diff"/>
+                        </group>
+                        <group>
+                            <field name="duration_real_minutes"/>
+                            <field name="delay_minutes"/>
+                            <field name="stop_completion_rate" widget="progressbar"/>
+                            <field name="has_deviations"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Control de Puntos de Parada" name="stop_checks">
+                            <field name="stop_check_ids">
+                                <tree editable="bottom" 
+                                      decoration-success="status == 'visited'" 
+                                      decoration-warning="status == 'delayed'" 
+                                      decoration-danger="status == 'missed'">
+                                    <field name="sequence"/>
+                                    <field name="name"/>
+                                    <field name="scheduled_time"/>
+                                    <field name="actual_arrival_time"/>
+                                    <field name="min_distance_meters"/>
+                                    <field name="delay_minutes"/>
+                                    <field name="status" widget="badge" 
+                                           decoration-success="status == 'visited'" 
+                                           decoration-warning="status == 'delayed'" 
+                                           decoration-danger="status == 'missed'"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <page string="Incidencias Detectadas" name="incidents">
+                            <field name="incident_ids" readonly="1">
+                                <tree decoration-danger="severity == 'high'" decoration-warning="severity == 'medium'">
+                                    <field name="timestamp"/>
+                                    <field name="incident_type" widget="badge"/>
+                                    <field name="severity" widget="badge"/>
+                                    <field name="name"/>
+                                    <field name="delay_minutes"/>
+                                    <field name="deviation_distance"/>
+                                    <field name="description"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <page string="Historial de Coordenadas GPS" name="points">
+                            <div class="mb-2">
+                                <button name="action_sync_points_from_traccar" 
+                                        type="object" 
+                                        string="Obtener Puntos desde Traccar Server" 
+                                        class="btn btn-sm btn-outline-primary" 
+                                        icon="fa-download"/>
+                            </div>
+                            <field name="point_ids" readonly="1">
+                                <tree limit="30">
+                                    <field name="timestamp"/>
+                                    <field name="latitude"/>
+                                    <field name="longitude"/>
+                                    <field name="speed"/>
+                                    <field name="is_valid" widget="boolean_toggle"/>
+                                    <field name="traccar_position_id"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <page string="Observaciones Generales" name="notes">
+                            <field name="notes" placeholder="Notas adicionales del recorrido, condiciones climáticas, estado de la vía..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- VISTA BÚSQUEDA DE RECORRIDOS -->
+    <record id="view_transport_trip_search" model="ir.ui.view">
+        <field name="name">transport.trip.search</field>
+        <field name="model">transport.trip</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Recorridos">
+                <field name="name"/>
+                <field name="vehicle_id"/>
+                <field name="route_id"/>
+                <field name="driver_id"/>
+                <separator/>
+                <filter string="En Curso" name="in_progress" domain="[('state', '=', 'in_progress')]"/>
+                <filter string="Completados" name="completed" domain="[('state', '=', 'completed')]"/>
+                <separator/>
+                <filter string="Conformes (Puntuales)" name="compliant" domain="[('compliance_status', '=', 'compliant')]"/>
+                <filter string="Con Retraso" name="delayed" domain="[('compliance_status', '=', 'delayed')]"/>
+                <filter string="Incumplidos" name="non_compliant" domain="[('compliance_status', '=', 'non_compliant')]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Ruta" name="group_route" context="{'group_by': 'route_id'}"/>
+                    <filter string="Vehículo" name="group_vehicle" context="{'group_by': 'vehicle_id'}"/>
+                    <filter string="Estado" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Cumplimiento" name="group_compliance" context="{'group_by': 'compliance_status'}"/>
+                    <filter string="Fecha" name="group_date" context="{'group_by': 'date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ACCIÓN DE VENTANA PARA RECORRIDOS -->
+    <record id="action_transport_trip" model="ir.actions.act_window">
+        <field name="name">Recorridos y Asignaciones</field>
+        <field name="res_model">transport.trip</field>
+        <field name="view_mode">tree,kanban,calendar,form</field>
+        <field name="search_view_id" ref="view_transport_trip_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Programe un nuevo recorrido de bus universitario.
+            </p>
+            <p>
+                Asigne un vehículo y conductor a una ruta en una fecha y horario específicos.
+            </p>
+        </field>
+    </record>
+</odoo>
+

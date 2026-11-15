@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- RUTA 1: Campus Huachi - Campus Ingahurco -->
+        <record id="route_huachi_ingahurco" model="transport.route">
+            <field name="name">Ruta 1: Troncal Campus Huachi - Campus Ingahurco</field>
+            <field name="code">UTA-R01</field>
+            <field name="origin">Campus Huachi (Av. Los Chasquis)</field>
+            <field name="destination">Campus Ingahurco (Av. Colombia)</field>
+            <field name="estimated_distance">5.8</field>
+            <field name="estimated_duration">25.0</field>
+            <field name="allowed_deviation_meters">150.0</field>
+            <field name="description">Ruta troncal principal entre el campus sur Huachi y el campus norte Ingahurco atravesando el centro comercial y financiero de Ambato.</field>
+            <field name="reference_coordinates">[[-1.2687,-78.6258],[-1.2605,-78.6242],[-1.2418,-78.6279],[-1.2425,-78.6185]]</field>
+        </record>
+
+        <!-- Paradas Ruta 1 -->
+        <record id="stop_r1_1" model="transport.route.stop">
+            <field name="name">1. Salida: Campus Huachi - Puerta Principal</field>
+            <field name="sequence">10</field>
+            <field name="route_id" ref="route_huachi_ingahurco"/>
+            <field name="latitude">-1.2687000</field>
+            <field name="longitude">-78.6258000</field>
+            <field name="expected_offset_minutes">0</field>
+            <field name="proximity_radius">60.0</field>
+            <field name="time_tolerance">5</field>
+            <field name="is_mandatory">1</field>
+        </record>
+
+        <record id="stop_r1_2" model="transport.route.stop">
+            <field name="name">2. Parada Mall de los Andes (Av. Atahualpa)</field>
+            <field name="sequence">20</field>
+            <field name="route_id" ref="route_huachi_ingahurco"/>
+            <field name="latitude">-1.2605000</field>
+            <field name="longitude">-78.6242000</field>
+            <field name="expected_offset_minutes">8</field>
+            <field name="proximity_radius">50.0</field>
+            <field name="time_tolerance">5</field>
+            <field name="is_mandatory">1</field>
+        </record>
+
+        <record id="stop_r1_3" model="transport.route.stop">
+            <field name="name">3. Parada Parque Cevallos (Centro Ambato)</field>
+            <field name="sequence">30</field>
+            <field name="route_id" ref="route_huachi_ingahurco"/>
+            <field name="latitude">-1.2418000</field>
+            <field name="longitude">-78.6279000</field>
+            <field name="expected_offset_minutes">18</field>
+            <field name="proximity_radius">50.0</field>
+            <field name="time_tolerance">5</field>
+            <field name="is_mandatory">1</field>
+        </record>
+
+        <record id="stop_r1_4" model="transport.route.stop">
+            <field name="name">4. Llegada: Campus Ingahurco - Terminal</field>
+            <field name="sequence">40</field>
+            <field name="route_id" ref="route_huachi_ingahurco"/>
+            <field name="latitude">-1.2425000</field>
+            <field name="longitude">-78.6185000</field>
+            <field name="expected_offset_minutes">25</field>
+            <field name="proximity_radius">60.0</field>
+            <field name="time_tolerance">5</field>
+            <field name="is_mandatory">1</field>
+        </record>
+
+        <!-- RUTA 2: Campus Huachi - Campus Querochaca -->
+        <record id="route_huachi_querochaca" model="transport.route">
+            <field name="name">Ruta 2: Intercampus Huachi - Querochaca (Línea Sur)</field>
+            <field name="code">UTA-R02</field>
+            <field name="origin">Campus Huachi (Estación Sur)</field>
+            <field name="destination">Campus Querochaca (Cevallos - Agropecuarias)</field>
+            <field name="estimated_distance">11.5</field>
+            <field name="estimated_duration">35.0</field>
+            <field name="allowed_deviation_meters">200.0</field>
+            <field name="description">Ruta hacia la Facultad de Ciencias Agropecuarias en Querochaca por el eje Panamericana Sur.</field>
+            <field name="reference_coordinates">[[-1.2687,-78.6258],[-1.2785,-78.6310],[-1.2980,-78.6210],[-1.3328,-78.6015]]</field>
+        </record>
+
+        <!-- Paradas Ruta 2 -->
+        <record id="stop_r2_1" model="transport.route.stop">
+            <field name="name">1. Salida: Campus Huachi (Estación Sur)</field>
+            <field name="sequence">10</field>
+            <field name="route_id" ref="route_huachi_querochaca"/>
+            <field name="latitude">-1.2687000</field>
+            <field name="longitude">-78.6258000</field>
+            <field name="expected_offset_minutes">0</field>
+            <field name="proximity_radius">60.0</field>
+            <field name="time_tolerance">5</field>
+            <field name="is_mandatory">1</field>
+        </record>
+
+        <record id="stop_r2_2" model="transport.route.stop">
+            <field name="name">2. Parada Mercado Mayorista (Av. El Cóndor)</field>
+            <field name="sequence">20</field>
+            <field name="route_id" ref="route_huachi_querochaca"/>
+            <field name="latitude">-1.2785000</field>
+            <field name="longitude">-78.6310000</field>
+            <field name="expected_offset_minutes">10</field>
+            <field name="proximity_radius">50.0</field>
+            <field name="time_tolerance">5</field>
+            <field name="is_mandatory">1</field>
+        </record>
+
+        <record id="stop_r2_3" model="transport.route.stop">
+            <field name="name">3. Parada Redondel Huachi Grande</field>
+            <field name="sequence">30</field>
+            <field name="route_id" ref="route_huachi_querochaca"/>
+            <field name="latitude">-1.2980000</field>
+            <field name="longitude">-78.6210000</field>
+            <field name="expected_offset_minutes">20</field>
+            <field name="proximity_radius">60.0</field>
+            <field name="time_tolerance">5</field>
+            <field name="is_mandatory">1</field>
+        </record>
+
+        <record id="stop_r2_4" model="transport.route.stop">
+            <field name="name">4. Llegada: Campus Querochaca - Acceso Principal</field>
+            <field name="sequence">40</field>
+            <field name="route_id" ref="route_huachi_querochaca"/>
+            <field name="latitude">-1.3328000</field>
+            <field name="longitude">-78.6015000</field>
+            <field name="expected_offset_minutes">35</field>
+            <field name="proximity_radius">60.0</field>
+            <field name="time_tolerance">5</field>
+            <field name="is_mandatory">1</field>
+        </record>
+
+        <!-- RUTA 3: Circuito Ficoa - Huachi -->
+        <record id="route_ficoa_huachi" model="transport.route">
+            <field name="name">Ruta 3: Circuito Periférico Ficoa - Polideportivo - Huachi</field>
+            <field name="code">UTA-R03</field>
+            <field name="origin">Redondel de Miraflores</field>
+            <field name="destination">Campus Huachi</field>
+            <field name="estimated_distance">4.6</field>
+            <field name="estimated_duration">20.0</field>
+            <field name="allowed_deviation_meters">150.0</field>
+            <field name="description">Recorrido perimetral universitario para estudiantes del sector oeste y deportivo.</field>
+            <field name="reference_coordinates">[[-1.2490,-78.6360],[-1.2580,-78.6320],[-1.2650,-78.6285],[-1.2687,-78.6258]]</field>
+        </record>
+
+        <!-- Paradas Ruta 3 -->
+        <record id="stop_r3_1" model="transport.route.stop">
+            <field name="name">1. Salida: Redondel Miraflores</field>
+            <field name="sequence">10</field>
+            <field name="route_id" ref="route_ficoa_huachi"/>
+            <field name="latitude">-1.2490000</field>
+            <field name="longitude">-78.6360000</field>
+            <field name="expected_offset_minutes">0</field>
+            <field name="proximity_radius">50.0</field>
+            <field name="time_tolerance">5</field>
+            <field name="is_mandatory">1</field>
+        </record>
+
+        <record id="stop_r3_2" model="transport.route.stop">
+            <field name="name">2. Parada Parque de Las Flores</field>
+            <field name="sequence">20</field>
+            <field name="route_id" ref="route_ficoa_huachi"/>
+            <field name="latitude">-1.2580000</field>
+            <field name="longitude">-78.6320000</field>
+            <field name="expected_offset_minutes">7</field>
+            <field name="proximity_radius">50.0</field>
+            <field name="time_tolerance">5</field>
+            <field name="is_mandatory">1</field>
+        </record>
+
+        <record id="stop_r3_3" model="transport.route.stop">
+            <field name="name">3. Parada Polideportivo Iván Vallejo</field>
+            <field name="sequence">30</field>
+            <field name="route_id" ref="route_ficoa_huachi"/>
+            <field name="latitude">-1.2650000</field>
+            <field name="longitude">-78.6285000</field>
+            <field name="expected_offset_minutes">14</field>
+            <field name="proximity_radius">50.0</field>
+            <field name="time_tolerance">5</field>
+            <field name="is_mandatory">1</field>
+        </record>
+
+        <record id="stop_r3_4" model="transport.route.stop">
+            <field name="name">4. Llegada: Campus Huachi - Acceso Administrativo</field>
+            <field name="sequence">40</field>
+            <field name="route_id" ref="route_ficoa_huachi"/>
+            <field name="latitude">-1.2687000</field>
+            <field name="longitude">-78.6258000</field>
+            <field name="expected_offset_minutes">20</field>
+            <field name="proximity_radius">60.0</field>
+            <field name="time_tolerance">5</field>
+            <field name="is_mandatory">1</field>
+        </record>
+    </data>
+</odoo>
+

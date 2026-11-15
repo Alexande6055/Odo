@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- VISTA ÁRBOL DE INCIDENCIAS -->
+    <record id="view_transport_trip_incident_tree" model="ir.ui.view">
+        <field name="name">transport.trip.incident.tree</field>
+        <field name="model">transport.trip.incident</field>
+        <field name="arch" type="xml">
+            <tree string="Incidencias y Desviaciones" 
+                  decoration-danger="severity == 'high'" 
+                  decoration-warning="severity == 'medium'" 
+                  decoration-info="severity == 'low'">
+                <field name="timestamp"/>
+                <field name="name"/>
+                <field name="incident_type" widget="badge"/>
+                <field name="severity" widget="badge" 
+                       decoration-danger="severity == 'high'" 
+                       decoration-warning="severity == 'medium'" 
+                       decoration-info="severity == 'low'"/>
+                <field name="trip_id"/>
+                <field name="route_id"/>
+                <field name="vehicle_id"/>
+                <field name="stop_id"/>
+                <field name="delay_minutes"/>
+                <field name="deviation_distance"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- VISTA FORMULARIO DE INCIDENCIA -->
+    <record id="view_transport_trip_incident_form" model="ir.ui.view">
+        <field name="name">transport.trip.incident.form</field>
+        <field name="model">transport.trip.incident</field>
+        <field name="arch" type="xml">
+            <form string="Incidencia de Recorrido">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Título de la Incidencia"/>
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Clasificación">
+                            <field name="incident_type"/>
+                            <field name="severity" widget="badge" 
+                                   decoration-danger="severity == 'high'" 
+                                   decoration-warning="severity == 'medium'" 
+                                   decoration-info="severity == 'low'"/>
+                            <field name="timestamp"/>
+                        </group>
+                        <group string="Contexto de Recorrido">
+                            <field name="trip_id"/>
+                            <field name="route_id"/>
+                            <field name="vehicle_id"/>
+                            <field name="stop_id"/>
+                        </group>
+                    </group>
+                    <group string="Cuantificación de la Anomalía">
+                        <group>
+                            <field name="delay_minutes"/>
+                            <field name="deviation_distance"/>
+                        </group>
+                        <group>
+                            <field name="latitude"/>
+                            <field name="longitude"/>
+                        </group>
+                    </group>
+                    <group string="Detalles y Justificación">
+                        <field name="description" nolabel="1" placeholder="Descripción detallada del incumplimiento..."/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- VISTA GRÁFICO DE INCIDENCIAS -->
+    <record id="view_transport_trip_incident_graph" model="ir.ui.view">
+        <field name="name">transport.trip.incident.graph</field>
+        <field name="model">transport.trip.incident</field>
+        <field name="arch" type="xml">
+            <graph string="Análisis de Incidencias por Tipo" type="bar">
+                <field name="incident_type"/>
+                <field name="severity"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- VISTA PIVOT DE INCIDENCIAS -->
+    <record id="view_transport_trip_incident_pivot" model="ir.ui.view">
+        <field name="name">transport.trip.incident.pivot</field>
+        <field name="model">transport.trip.incident</field>
+        <field name="arch" type="xml">
+            <pivot string="Matriz de Incidencias">
+                <field name="route_id" type="row"/>
+                <field name="incident_type" type="col"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- VISTA BÚSQUEDA DE INCIDENCIAS -->
+    <record id="view_transport_trip_incident_search" model="ir.ui.view">
+        <field name="name">transport.trip.incident.search</field>
+        <field name="model">transport.trip.incident</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Incidencias">
+                <field name="name"/>
+                <field name="trip_id"/>
+                <field name="route_id"/>
+                <field name="vehicle_id"/>
+                <separator/>
+                <filter string="Retrasos" name="filter_delay" domain="[('incident_type', '=', 'delay')]"/>
+                <filter string="Paradas Omitidas" name="filter_missed" domain="[('incident_type', '=', 'missed_stop')]"/>
+                <filter string="Desviaciones" name="filter_deviation" domain="[('incident_type', '=', 'route_deviation')]"/>
+                <filter string="Alta Severidad" name="filter_high" domain="[('severity', '=', 'high')]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Tipo de Incidencia" name="group_type" context="{'group_by': 'incident_type'}"/>
+                    <filter string="Ruta" name="group_route" context="{'group_by': 'route_id'}"/>
+                    <filter string="Vehículo" name="group_vehicle" context="{'group_by': 'vehicle_id'}"/>
+                    <filter string="Severidad" name="group_severity" context="{'group_by': 'severity'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ACCIÓN DE VENTANA -->
+    <record id="action_transport_trip_incident" model="ir.actions.act_window">
+        <field name="name">Registro de Incidencias</field>
+        <field name="res_model">transport.trip.incident</field>
+        <field name="view_mode">tree,graph,pivot,form</field>
+        <field name="search_view_id" ref="view_transport_trip_incident_search"/>
+    </record>
+</odoo>
+
