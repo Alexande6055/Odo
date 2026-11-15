@@ -28,6 +28,10 @@
                                     <label for="traccar_password" class="col-4 o_light_label"/>
                                     <field name="traccar_password" class="col-8" password="True"/>
                                 </div>
+                                <div class="row mt8">
+                                    <label for="traccar_map_url" class="col-4 o_light_label"/>
+                                    <field name="traccar_map_url" class="col-8" placeholder="http://localhost:3050"/>
+                                </div>
                                 <div class="mt16">
                                     <button name="action_test_traccar_connection" 
                                             type="object" 

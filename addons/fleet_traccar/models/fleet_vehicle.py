@@ -51,18 +51,65 @@ class FleetVehicle(models.Model):
         readonly=True,
         copy=False
     )
-    google_maps_url = fields.Char(
-        string='URL Google Maps',
-        compute='_compute_google_maps_url'
+    osm_map_url = fields.Char(
+        string='Enlace OpenStreetMap',
+        compute='_compute_osm_map_url'
+    )
+    traccar_map_url = fields.Char(
+        string='URL del Mapa GPS',
+        compute='_compute_traccar_map_url'
+    )
+    traccar_map_iframe = fields.Html(
+        string='Mapa en Tiempo Real',
+        compute='_compute_traccar_map_iframe',
+        sanitize=False
     )
 
     @api.depends('last_latitude', 'last_longitude')
-    def _compute_google_maps_url(self):
+    def _compute_osm_map_url(self):
         for vehicle in self:
             if vehicle.last_latitude or vehicle.last_longitude:
-                vehicle.google_maps_url = f"https://www.google.com/maps?q={vehicle.last_latitude},{vehicle.last_longitude}"
+                vehicle.osm_map_url = f"https://www.openstreetmap.org/?mlat={vehicle.last_latitude}&mlon={vehicle.last_longitude}#map=16/{vehicle.last_latitude}/{vehicle.last_longitude}"
             else:
-                vehicle.google_maps_url = False
+                vehicle.osm_map_url = False
+
+    @api.depends('traccar_device_id', 'gps_imei')
+    def _compute_traccar_map_url(self):
+        ICP = self.env['ir.config_parameter'].sudo()
+        map_base = (ICP.get_param('fleet_traccar.map_url') or 'http://localhost:3050').strip().rstrip('/')
+        for vehicle in self:
+            if vehicle.traccar_device_id:
+                vehicle.traccar_map_url = f"{map_base}/?deviceId={vehicle.traccar_device_id}&compact=true"
+            elif vehicle.gps_imei:
+                vehicle.traccar_map_url = f"{map_base}/?imei={vehicle.gps_imei}&compact=true"
+            else:
+                vehicle.traccar_map_url = f"{map_base}/?compact=true"
+
+    @api.depends('traccar_map_url')
+    def _compute_traccar_map_iframe(self):
+        for vehicle in self:
+            if vehicle.traccar_map_url:
+                vehicle.traccar_map_iframe = f'''
+                    <div style="width: 100%; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                        <iframe src="{vehicle.traccar_map_url}" 
+                                style="width: 100%; height: 560px; border: none; display: block;" 
+                                allow="geolocation">
+                        </iframe>
+                    </div>
+                '''
+            else:
+                vehicle.traccar_map_iframe = '<div class="alert alert-info">Ingrese el IMEI del GPS y vincule el vehículo para cargar el mapa.</div>'
+
+    def action_open_traccar_map(self):
+        """Abre el micro-sistema de mapa interactivo en una pestaña completa."""
+        self.ensure_one()
+        url = self.traccar_map_url or 'http://localhost:3000'
+        full_url = url.replace('&compact=true', '').replace('?compact=true', '')
+        return {
+            'type': 'ir.actions.act_url',
+            'url': full_url,
+            'target': 'new'
+        }
 
     def _get_traccar_config(self):
         """Obtiene la configuración del servidor Traccar desde los parámetros del sistema."""
@@ -289,14 +336,23 @@ class FleetVehicle(models.Model):
                 }
         return True
 
-    def action_open_google_maps(self):
-        """Abre la ubicación actual del vehículo en Google Maps."""
+    def action_open_osm_map(self):
+        """Abre la ubicación actual del vehículo en OpenStreetMap (100% libre, sin API)."""
         self.ensure_one()
         if not self.last_latitude and not self.last_longitude:
             raise UserError(_("Este vehículo aún no cuenta con coordenadas GPS sincronizadas."))
         return {
             'type': 'ir.actions.act_url',
-            'url': f"https://www.google.com/maps?q={self.last_latitude},{self.last_longitude}",
+            'url': f"https://www.openstreetmap.org/?mlat={self.last_latitude}&mlon={self.last_longitude}#map=16/{self.last_latitude}/{self.last_longitude}",
+            'target': 'new'
+        }
+
+    def action_open_traccar_native_web(self):
+        """Abre la interfaz web nativa del contenedor Traccar."""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_url',
+            'url': 'http://localhost:8082',
             'target': 'new'
         }
 

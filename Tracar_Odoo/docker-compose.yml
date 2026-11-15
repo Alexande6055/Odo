@@ -1,6 +1,3 @@
-
-version: '3.8'
-
 services:
   db:
     image: postgres:15-alpine
@@ -22,12 +19,26 @@ services:
       - db
     ports:
       - "8082:8082"
-      - "5055:5055"
-      - "5000-5150:5000-5150"
-      - "5000-5150:5000-5150/udp"
+      - "5000-5036:5000-5036"
+      - "5038-5150:5038-5150"
+      - "5000-5036:5000-5036/udp"
+      - "5038-5150:5038-5150/udp"
+
     volumes:
       - ./traccar.xml:/opt/traccar/conf/traccar.xml:ro
       - ./logs:/opt/traccar/logs
+
+  map-bridge:
+    build: ./microsistema-ruta-vehiculo
+    container_name: traccar-map-bridge
+    restart: always
+    depends_on:
+      - traccar
+    ports:
+      - "3050:3000"
+    environment:
+      - PORT=3000
+      - TRACCAR_URL=http://traccar:8082
 
 volumes:
   postgres_data:
