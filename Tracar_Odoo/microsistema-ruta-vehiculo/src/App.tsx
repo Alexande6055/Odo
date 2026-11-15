@@ -4,7 +4,7 @@ import { Header } from './components/Header';
 import { VehicleCard } from './components/VehicleCard';
 import { PlaybackControls } from './components/PlaybackControls';
 import { SettingsModal } from './components/SettingsModal';
-import type { Device, Position, RoutePoint, MapTileLayer } from './types/traccar';
+import type { Device, Position, RoutePoint, MapTileLayer, StopPoint } from './types/traccar';
 import { TraccarService } from './services/traccarApi';
 
 export function App() {
@@ -12,6 +12,28 @@ export function App() {
   const paramDeviceId = queryParams.get('deviceId');
   const paramImei = queryParams.get('imei');
   const isIframe = window.self !== window.top || queryParams.get('compact') === 'true';
+  const autoRoute = queryParams.get('autoRoute') === 'true';
+
+  // Credentials from query params or localStorage
+  const paramUser = queryParams.get('user');
+  const paramPass = queryParams.get('pass');
+  if (paramUser) localStorage.setItem('traccar_user', paramUser);
+  if (paramPass) localStorage.setItem('traccar_pass', paramPass);
+
+  const initialUser = paramUser || localStorage.getItem('traccar_user') || 'juanperzezss@gmail.com';
+  const initialPass = paramPass || localStorage.getItem('traccar_pass') || 'asd1230A';
+  TraccarService.setCredentials(initialUser, initialPass);
+
+  let initialStops: StopPoint[] = [];
+  const paramStops = queryParams.get('stops');
+  if (paramStops) {
+    try {
+      initialStops = JSON.parse(paramStops);
+    } catch (e) {
+      console.warn('Error parsing stops param:', e);
+    }
+  }
+  const [stops] = useState<StopPoint[]>(initialStops);
 
   const [devices, setDevices] = useState<Device[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
@@ -36,9 +58,7 @@ export function App() {
   const playbackTimerRef = useRef<any>(null);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('traccar_user') || 'juanperzezss@gmail.com';
-    const savedPass = localStorage.getItem('traccar_pass') || '';
-    TraccarService.setCredentials(savedUser, savedPass);
+    TraccarService.setCredentials(initialUser, initialPass);
   }, []);
 
   const fetchLiveTrackingData = async () => {
@@ -208,6 +228,12 @@ export function App() {
     };
   }, [isPlaying, speedMultiplier, route.length]);
 
+  useEffect(() => {
+    if (autoRoute && selectedDeviceId && !isDemoMode && route.length === 0) {
+      handleLoadRoute();
+    }
+  }, [autoRoute, selectedDeviceId, isDemoMode]);
+
   const selectedDevice = devices.find((d) => d.id === selectedDeviceId);
   const selectedPosition = positions.find((p) => p.deviceId === selectedDeviceId);
 
@@ -243,6 +269,7 @@ export function App() {
           playbackIndex={playbackIndex}
           tileLayer={tileLayer}
           autoCenter={autoCenter}
+          stops={stops}
           onSelectDevice={(deviceId) => {
             setSelectedDeviceId(deviceId);
           }}

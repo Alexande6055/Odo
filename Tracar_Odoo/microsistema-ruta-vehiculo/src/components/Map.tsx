@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
-import type { Device, Position, RoutePoint, MapTileLayer } from '../types/traccar';
+import type { Device, Position, RoutePoint, MapTileLayer, StopPoint } from '../types/traccar';
 import { knotsToKmh } from '../services/traccarApi';
 
 interface MapProps {
@@ -11,6 +11,7 @@ interface MapProps {
   playbackIndex: number | null;
   tileLayer: MapTileLayer;
   autoCenter: boolean;
+  stops?: StopPoint[];
   onSelectDevice: (deviceId: number) => void;
 }
 
@@ -42,6 +43,7 @@ export const Map: React.FC<MapProps> = ({
   playbackIndex,
   tileLayer,
   autoCenter,
+  stops = [],
   onSelectDevice,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -49,15 +51,17 @@ export const Map: React.FC<MapProps> = ({
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const markersGroupRef = useRef<L.LayerGroup | null>(null);
   const routeLayerRef = useRef<L.LayerGroup | null>(null);
+  const stopsLayerRef = useRef<L.LayerGroup | null>(null);
   const playbackMarkerRef = useRef<L.Marker | null>(null);
 
   // Initialize Leaflet Map
   useEffect(() => {
     if (!mapContainerRef.current || mapInstanceRef.current) return;
 
+    // Coordenadas iniciales por defecto: Ambato, Ecuador (Universidad Técnica de Ambato)
     const map = L.map(mapContainerRef.current, {
-      center: [-12.046374, -77.042793],
-      zoom: 13,
+      center: [-1.2543, -78.6228],
+      zoom: 14,
       zoomControl: false,
     });
 
@@ -71,23 +75,46 @@ export const Map: React.FC<MapProps> = ({
     tileLayerRef.current = initialTiles;
     markersGroupRef.current = L.layerGroup().addTo(map);
     routeLayerRef.current = L.layerGroup().addTo(map);
+    stopsLayerRef.current = L.layerGroup().addTo(map);
 
     mapInstanceRef.current = map;
 
     // Trigger invalidateSize to ensure tiles render immediately
-    setTimeout(() => {
-      map.invalidateSize();
-    }, 100);
+    const initialTimer = setTimeout(() => {
+      if (mapInstanceRef.current && mapContainerRef.current) {
+        try {
+          mapInstanceRef.current.invalidateSize();
+        } catch {
+          // ignore when unmounting
+        }
+      }
+    }, 150);
 
     const resizeObserver = new ResizeObserver(() => {
-      map.invalidateSize();
+      if (mapInstanceRef.current && mapContainerRef.current) {
+        try {
+          mapInstanceRef.current.invalidateSize();
+        } catch {
+          // ignore when unmounting or container detached
+        }
+      }
     });
-    resizeObserver.observe(mapContainerRef.current);
+
+    if (mapContainerRef.current) {
+      resizeObserver.observe(mapContainerRef.current);
+    }
 
     return () => {
+      clearTimeout(initialTimer);
       resizeObserver.disconnect();
-      map.remove();
-      mapInstanceRef.current = null;
+      if (mapInstanceRef.current) {
+        try {
+          mapInstanceRef.current.remove();
+        } catch {
+          // ignore unmount errors
+        }
+        mapInstanceRef.current = null;
+      }
     };
   }, []);
 
@@ -289,6 +316,82 @@ export const Map: React.FC<MapProps> = ({
       map.fitBounds(L.latLngBounds(latLngs), { padding: [60, 60], maxZoom: 16 });
     }
   }, [route]);
+
+  // Render University Route Stops (Puntos de Control UTA)
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    const stopsLayer = stopsLayerRef.current;
+    if (!map || !stopsLayer) return;
+
+    stopsLayer.clearLayers();
+    if (!stops || stops.length === 0) return;
+
+    const bounds: L.LatLngExpression[] = [];
+
+    stops.forEach((stop, index) => {
+      if (!stop.lat || !stop.lon) return;
+      bounds.push([stop.lat, stop.lon]);
+
+      const seqNum = stop.seq || index + 1;
+      let statusColor = 'bg-cyan-500';
+      let statusBadge = 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40';
+      let statusText = 'Programada';
+
+      if (stop.status === 'visited') {
+        statusColor = 'bg-emerald-500';
+        statusBadge = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+        statusText = 'Cumplida a Tiempo';
+      } else if (stop.status === 'delayed') {
+        statusColor = 'bg-amber-500';
+        statusBadge = 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+        statusText = `Con Retraso (${stop.delay || 0} min)`;
+      } else if (stop.status === 'missed') {
+        statusColor = 'bg-rose-500';
+        statusBadge = 'bg-rose-500/20 text-rose-300 border-rose-500/40';
+        statusText = 'Parada Omitida';
+      }
+
+      const stopIcon = L.divIcon({
+        html: `
+          <div class="relative flex items-center justify-center">
+            <div class="w-7 h-7 rounded-full ${statusColor} border-2 border-white shadow-xl flex items-center justify-center text-xs font-bold text-white hover:scale-125 transition-transform duration-200">
+              ${seqNum}
+            </div>
+            <div class="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap px-1.5 py-0.2 rounded bg-slate-900/90 text-[10px] text-slate-200 border border-slate-700 shadow pointer-events-none">
+              ${stop.name}
+            </div>
+          </div>
+        `,
+        className: 'university-stop-marker',
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
+      });
+
+      const marker = L.marker([stop.lat, stop.lon], { icon: stopIcon });
+
+      const popupHtml = `
+        <div class="p-3 text-slate-100 font-sans min-w-[200px]">
+          <div class="flex items-center justify-between pb-1.5 mb-1.5 border-b border-slate-700">
+            <span class="font-bold text-sm text-cyan-400">${seqNum}. ${stop.name}</span>
+          </div>
+          <div class="space-y-1 text-xs">
+            <span class="inline-block px-2 py-0.5 text-[10px] font-semibold rounded-full border ${statusBadge} mb-1">
+              ${statusText}
+            </span>
+            ${stop.schedTime ? `<div class="text-slate-300">Horario previsto: <b class="text-white">${stop.schedTime}</b></div>` : ''}
+            ${stop.actualTime ? `<div class="text-slate-300">Llegada real: <b class="text-emerald-400">${stop.actualTime}</b></div>` : ''}
+          </div>
+        </div>
+      `;
+
+      marker.bindPopup(popupHtml, { className: 'custom-leaflet-popup' });
+      stopsLayer.addLayer(marker);
+    });
+
+    if (autoCenter && bounds.length > 0 && (!route || route.length === 0)) {
+      map.fitBounds(L.latLngBounds(bounds), { padding: [60, 60], maxZoom: 16 });
+    }
+  }, [stops, autoCenter, route]);
 
   // Handle Playback Marker Animation
   useEffect(() => {

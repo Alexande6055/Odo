@@ -52,6 +52,17 @@ export interface RoutePoint {
   address?: string;
 }
 
+export interface StopPoint {
+  name: string;
+  lat: number;
+  lon: number;
+  seq?: number;
+  status?: 'visited' | 'delayed' | 'missed' | 'pending' | string;
+  schedTime?: string;
+  actualTime?: string;
+  delay?: number;
+}
+
 export type MapTileLayer = 'dark' | 'light' | 'streets' | 'satellite';
 
 export interface AppConfig {

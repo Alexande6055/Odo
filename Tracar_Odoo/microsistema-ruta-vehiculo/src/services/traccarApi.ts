@@ -19,6 +19,10 @@ export class TraccarService {
     }
   }
 
+  public static getCredentials(): { authHeader: string } {
+    return { authHeader: this.authHeader };
+  }
+
   private static getHeaders(): HeadersInit {
     const headers: Record<string, string> = {
       'Accept': 'application/json',
@@ -30,11 +34,24 @@ export class TraccarService {
     return headers;
   }
 
+  public static async ensureSession(): Promise<boolean> {
+    try {
+      const res = await fetch(`${API_BASE}/session`, {
+        headers: this.getHeaders(),
+        credentials: 'include',
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
   // Fetch all devices
   public static async getDevices(): Promise<Device[]> {
     try {
       const res = await fetch(`${API_BASE}/devices`, {
         headers: this.getHeaders(),
+        credentials: 'include',
       });
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}: ${res.statusText}`);
@@ -54,6 +71,7 @@ export class TraccarService {
         : `${API_BASE}/positions`;
       const res = await fetch(url, {
         headers: this.getHeaders(),
+        credentials: 'include',
       });
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}: ${res.statusText}`);
@@ -75,6 +93,7 @@ export class TraccarService {
       const url = `${API_BASE}/reports/route?deviceId=${deviceId}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
       const res = await fetch(url, {
         headers: this.getHeaders(),
+        credentials: 'include',
       });
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}: ${res.statusText}`);
@@ -108,9 +127,11 @@ export class TraccarService {
     let reconnectTimeout: any = null;
     let isDisposed = false;
 
-    const connect = () => {
+    const connect = async () => {
       if (isDisposed) return;
       try {
+        await this.ensureSession();
+        if (isDisposed) return;
         socket = new WebSocket(wsUrl);
 
         socket.onmessage = (event) => {
@@ -155,12 +176,13 @@ export class TraccarService {
 
   // Generate realistic route simulation for instant demo and testing
   public static generateDemoRoute(): { device: Device; route: RoutePoint[] } {
-    const baseLat = -12.046374;
-    const baseLon = -77.042793;
+    // Coordenadas base en Ambato, Ecuador (Campus Huachi UTA)
+    const baseLat = -1.2687;
+    const baseLon = -78.6258;
 
     const demoDevice: Device = {
       id: 9999,
-      name: 'Vehículo Demo (Simulado GPS)',
+      name: 'Bus Universitario UTA (Demo GPS)',
       uniqueId: 'DEMO-863001234',
       status: 'online',
       lastUpdate: new Date().toISOString(),
@@ -173,32 +195,32 @@ export class TraccarService {
     const route: RoutePoint[] = [];
     let curLat = baseLat;
     let curLon = baseLon;
-    let now = Date.now() - 45 * 60 * 1000;
+    let now = Date.now() - 35 * 60 * 1000;
 
+    // Hacia Campus Ingahurco pasando por Mall de los Andes y Parque Cevallos
     const segments = [
-      { dLat: 0.0005, dLon: 0.0002, speed: 35, course: 22, count: 8 },
-      { dLat: 0.0002, dLon: 0.0008, speed: 52, course: 75, count: 12 },
-      { dLat: -0.0004, dLon: 0.0006, speed: 45, course: 125, count: 10 },
-      { dLat: -0.0006, dLon: -0.0002, speed: 60, course: 200, count: 8 },
-      { dLat: 0.0001, dLon: -0.0005, speed: 28, course: 280, count: 7 },
+      { dLat: 0.0010, dLon: 0.0002, speed: 32, course: 15, count: 8 },  // Salida Chasquis
+      { dLat: 0.0012, dLon: -0.0001, speed: 42, course: 355, count: 10 }, // Hacia Mall de los Andes
+      { dLat: 0.0015, dLon: -0.0003, speed: 28, course: 340, count: 12 }, // Hacia Parque Cevallos
+      { dLat: 0.0002, dLon: 0.0009, speed: 38, course: 75, count: 10 },  // Hacia Campus Ingahurco
     ];
 
     for (const seg of segments) {
       for (let i = 0; i < seg.count; i++) {
         curLat += seg.dLat + (Math.random() - 0.5) * 0.00005;
         curLon += seg.dLon + (Math.random() - 0.5) * 0.00005;
-        const currentSpeed = Math.max(0, seg.speed + (Math.random() - 0.5) * 8);
+        const currentSpeed = Math.max(0, seg.speed + (Math.random() - 0.5) * 6);
         now += 60 * 1000;
 
         route.push({
           latitude: Number(curLat.toFixed(6)),
           longitude: Number(curLon.toFixed(6)),
           speed: Math.round(currentSpeed),
-          course: seg.course + Math.round((Math.random() - 0.5) * 10),
+          course: seg.course + Math.round((Math.random() - 0.5) * 8),
           fixTime: new Date(now).toISOString(),
           ignition: currentSpeed > 0,
           batteryLevel: 95,
-          address: `Av. Principal Km ${(route.length * 0.4).toFixed(1)}`,
+          address: `Ambato - Av. Universitaria Km ${(route.length * 0.2).toFixed(1)}`,
         });
       }
     }

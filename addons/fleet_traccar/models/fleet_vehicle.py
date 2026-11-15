@@ -75,15 +75,22 @@ class FleetVehicle(models.Model):
 
     @api.depends('traccar_device_id', 'gps_imei')
     def _compute_traccar_map_url(self):
+        import urllib.parse
         ICP = self.env['ir.config_parameter'].sudo()
-        map_base = (ICP.get_param('fleet_traccar.map_url') or 'http://localhost:3050').strip().rstrip('/')
+        map_base = (ICP.get_param('fleet_traccar.map_url') or 'http://localhost:3000').strip().rstrip('/')
+        user = (ICP.get_param('fleet_traccar.user') or '').strip()
+        password = ICP.get_param('fleet_traccar.password') or ''
         for vehicle in self:
+            params = {'compact': 'true'}
+            if user:
+                params['user'] = user
+            if password:
+                params['pass'] = password
             if vehicle.traccar_device_id:
-                vehicle.traccar_map_url = f"{map_base}/?deviceId={vehicle.traccar_device_id}&compact=true"
+                params['deviceId'] = str(vehicle.traccar_device_id)
             elif vehicle.gps_imei:
-                vehicle.traccar_map_url = f"{map_base}/?imei={vehicle.gps_imei}&compact=true"
-            else:
-                vehicle.traccar_map_url = f"{map_base}/?compact=true"
+                params['imei'] = str(vehicle.gps_imei)
+            vehicle.traccar_map_url = f"{map_base}/?{urllib.parse.urlencode(params)}"
 
     @api.depends('traccar_map_url')
     def _compute_traccar_map_iframe(self):

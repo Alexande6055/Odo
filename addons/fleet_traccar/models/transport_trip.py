@@ -144,6 +144,11 @@ class TransportTrip(models.Model):
         string='N.º Incidencias',
         compute='_compute_counts'
     )
+    trip_map_html = fields.Html(
+        string='Mapa Interactivo del Recorrido',
+        compute='_compute_trip_map_html',
+        sanitize=False
+    )
     notes = fields.Text(string='Observaciones')
 
     @api.model_create_multi
@@ -162,6 +167,111 @@ class TransportTrip(models.Model):
             trip.point_count = len(trip.point_ids)
             trip.stop_check_count = len(trip.stop_check_ids)
             trip.incident_count = len(trip.incident_ids)
+
+    @api.depends('route_id', 'vehicle_id', 'vehicle_id.traccar_device_id', 'vehicle_id.gps_imei', 'stop_check_ids', 'stop_check_ids.status', 'point_ids', 'incident_ids')
+    def _compute_trip_map_html(self):
+        import urllib.parse
+        import json
+        ICP = self.env['ir.config_parameter'].sudo()
+        map_base = (ICP.get_param('fleet_traccar.map_url') or 'http://localhost:3000').strip().rstrip('/')
+        user = (ICP.get_param('fleet_traccar.user') or '').strip()
+        password = ICP.get_param('fleet_traccar.password') or ''
+
+        for trip in self:
+            query_params = {'compact': 'true'}
+            if user:
+                query_params['user'] = user
+            if password:
+                query_params['pass'] = password
+
+            if trip.vehicle_id.traccar_device_id:
+                query_params['deviceId'] = str(trip.vehicle_id.traccar_device_id)
+            elif trip.vehicle_id.gps_imei:
+                query_params['imei'] = str(trip.vehicle_id.gps_imei)
+
+            if trip.route_id:
+                query_params['routeName'] = trip.route_id.name or ''
+                stops_data = []
+                stops = trip.stop_check_ids.mapped('stop_id') if trip.stop_check_ids else trip.route_id.stop_ids
+                for s in stops.sorted('sequence'):
+                    sc = trip.stop_check_ids.filtered(lambda c: c.stop_id == s)
+                    stops_data.append({
+                        'name': s.name,
+                        'seq': s.sequence,
+                        'lat': s.latitude,
+                        'lon': s.longitude,
+                        'status': sc.status if sc else 'pending',
+                        'delay': sc.delay_minutes if sc else 0,
+                        'schedTime': sc.scheduled_time.strftime('%H:%M') if sc and sc.scheduled_time else f"+{s.expected_offset_minutes}m",
+                        'actualTime': sc.actual_arrival_time.strftime('%H:%M') if sc and sc.actual_arrival_time else '',
+                    })
+                if stops_data:
+                    query_params['stops'] = json.dumps(stops_data)
+
+            if trip.state in ('in_progress', 'completed'):
+                query_params['autoRoute'] = 'true'
+
+            map_url = f"{map_base}/?{urllib.parse.urlencode(query_params)}"
+            full_url = map_url.replace('&compact=true', '').replace('?compact=true', '')
+
+            trip.trip_map_html = f'''
+                <div class="card shadow-sm border-0 my-2 rounded-3 overflow-hidden">
+                    <div class="card-header text-white d-flex justify-content-between align-items-center py-2 px-3" style="background-color: #0f172a;">
+                        <span class="fw-bold text-info">
+                            <i class="fa fa-map-marker text-cyan me-2"></i>Micro-Sistema React + Leaflet ({map_base})
+                        </span>
+                        <div class="d-flex align-items-center gap-2">
+                            <a href="{full_url}" target="_blank" class="btn btn-sm btn-info text-white">
+                                <i class="fa fa-external-link me-1"></i>Abrir en Pantalla Completa ({map_base})
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body p-0 position-relative" style="height: 560px; background: #0f172a;">
+                        <iframe src="{map_url}" 
+                                style="width: 100%; height: 560px; border: none; display: block;" 
+                                allow="geolocation">
+                        </iframe>
+                    </div>
+                </div>
+            '''
+
+    @api.onchange('vehicle_id')
+    def _onchange_vehicle_id(self):
+        if self.vehicle_id and self.vehicle_id.driver_id:
+            self.driver_id = self.vehicle_id.driver_id
+
+    def action_view_points(self):
+        self.ensure_one()
+        return {
+            'name': _('Coordenadas GPS del Viaje'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'transport.trip.point',
+            'view_mode': 'tree,form',
+            'domain': [('trip_id', '=', self.id)],
+            'context': {'default_trip_id': self.id},
+        }
+
+    def action_view_incidents(self):
+        self.ensure_one()
+        return {
+            'name': _('Incidencias del Recorrido'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'transport.trip.incident',
+            'view_mode': 'tree,form,graph',
+            'domain': [('trip_id', '=', self.id)],
+            'context': {'default_trip_id': self.id},
+        }
+
+    def action_view_stops(self):
+        self.ensure_one()
+        return {
+            'name': _('Puntos de Control del Viaje'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'transport.trip.stop.check',
+            'view_mode': 'tree,form',
+            'domain': [('trip_id', '=', self.id)],
+            'context': {'default_trip_id': self.id},
+        }
 
     def _initialize_stop_checks(self):
         """Inicializa los controles de parada según la ruta asociada."""

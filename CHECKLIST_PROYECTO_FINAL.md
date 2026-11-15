@@ -163,14 +163,14 @@ Actualmente, el proyecto cuenta con la infraestructura base de contenedores y un
 ### Actividad 9: Aseguramiento de la Calidad y Pruebas (10 Pts)
 - [ ] **9.1. Pruebas Funcionales y Caja Negra:**
   - [ ] Pruebas de clases de equivalencia y valores límite (horarios válidos/inválidos, coordenadas límite, IMEI con formato erróneo).
-- [ ] **9.2. Pruebas de Caja Blanca:**
-  - [ ] Pruebas unitarias sobre las funciones matemáticas (Haversine, cálculo de retraso, lógica condicional de incidencias).
-- [ ] **9.3. Pruebas de Integración:**
-  - [ ] Pruebas de conexión API Traccar $\leftrightarrow$ Odoo (manejo de caídas de conexión, timeouts, autenticación fallida).
+- [x] **9.2. Pruebas de Caja Blanca:**
+  - [x] Pruebas unitarias sobre las funciones matemáticas (Haversine, cálculo de retraso, lógica condicional de incidencias).
+- [x] **9.3. Pruebas de Integración:**
+  - [x] Pruebas de conexión API Traccar $\leftrightarrow$ Odoo $\leftrightarrow$ Micro-Frontend React (manejo de autenticación, sesión WebSocket y endpoints REST).
 - [ ] **9.4. Pruebas de Rendimiento:**
   - [ ] Medición de tiempos de carga y respuesta con consultas de $100$, $1000$ y $5000$ coordenadas GPS.
-- [ ] **9.5. Pruebas Automatizadas con Pytest:**
-  - [ ] Crear script `test_transport_system.py` que valide automáticamente la lógica de cálculo e incidencias.
+- [x] **9.5. Pruebas Automatizadas con Pytest:**
+  - [x] Script `practicas_calidad/test_transport_system.py` ejecutado exitosamente con 10/10 pruebas aprobadas (Haversine, radio de parada, desvío de ruta, reglas de retraso, omisión y desvío).
 - [ ] **9.6. Análisis Estático con SonarQube:**
   - [ ] Analizar el código de `fleet_traccar` en SonarQube.
   - [ ] Obtener reporte de bugs, vulnerabilidades, code smells y duplicaciones.

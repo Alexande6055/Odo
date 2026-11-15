@@ -25,8 +25,8 @@ class ResConfigSettings(models.TransientModel):
     traccar_map_url = fields.Char(
         string='URL del Microservicio de Mapas',
         config_parameter='fleet_traccar.map_url',
-        default='http://localhost:3050',
-        help="URL del frontend del mapa para incrustar en Odoo (ej. http://localhost:3050)"
+        default='http://localhost:3000',
+        help="URL del frontend React de mapas (ej. http://localhost:3000 con pnpm run dev, o http://localhost:3050 con Docker)"
     )
 
     def action_test_traccar_connection(self):

@@ -95,7 +95,7 @@
         </field>
     </record>
 
-    <!-- VISTA FORMULARIO DE RECORRIDO (VIAJE) -->
+    <!-- VISTA FORMULARIO ENRIQUECIDA CON MAPA Y UX VISUAL -->
     <record id="view_transport_trip_form" model="ir.ui.view">
         <field name="name">transport.trip.form</field>
         <field name="model">transport.trip</field>
@@ -138,6 +138,42 @@
                     <field name="state" widget="statusbar" statusbar_visible="draft,in_progress,completed"/>
                 </header>
                 <sheet>
+                    <!-- BOTONES INTELIGENTES (STAT BUTTONS) -->
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_stops" 
+                                type="object" 
+                                class="oe_stat_button" 
+                                icon="fa-flag-checkered">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value"><field name="stop_check_count"/></span>
+                                <span class="o_stat_text">Paradas</span>
+                            </div>
+                        </button>
+                        <button name="action_view_incidents" 
+                                type="object" 
+                                class="oe_stat_button" 
+                                icon="fa-exclamation-triangle">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value text-danger" attrs="{'invisible': [('incident_count', '=', 0)]}">
+                                    <field name="incident_count"/>
+                                </span>
+                                <span class="o_stat_value" attrs="{'invisible': [('incident_count', '>', 0)]}">
+                                    <field name="incident_count"/>
+                                </span>
+                                <span class="o_stat_text">Incidencias</span>
+                            </div>
+                        </button>
+                        <button name="action_view_points" 
+                                type="object" 
+                                class="oe_stat_button" 
+                                icon="fa-map-marker">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value"><field name="point_count"/></span>
+                                <span class="o_stat_text">Puntos GPS</span>
+                            </div>
+                        </button>
+                    </div>
+
                     <div class="oe_title">
                         <label for="name" string="Código del Recorrido"/>
                         <h1>
@@ -149,43 +185,66 @@
                         </h1>
                     </div>
 
+                    <!-- TARJETAS RESUMEN DE MÉTRICAS RÁPIDAS -->
+                    <div class="row text-center my-3 g-2" attrs="{'invisible': [('state', '=', 'draft')]}">
+                        <div class="col-md-3">
+                            <div class="p-2 border rounded shadow-sm bg-light">
+                                <small class="text-muted d-block">Retraso Acumulado</small>
+                                <strong class="h4 text-warning"><field name="delay_minutes"/> <small>min</small></strong>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-2 border rounded shadow-sm bg-light">
+                                <small class="text-muted d-block">Cumplimiento Paradas</small>
+                                <strong class="h4 text-success"><field name="stop_completion_rate"/>%</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-2 border rounded shadow-sm bg-light">
+                                <small class="text-muted d-block">Distancia Real / Est.</small>
+                                <strong class="h4 text-primary"><field name="actual_distance"/> / <field name="estimated_distance"/> <small>km</small></strong>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-2 border rounded shadow-sm bg-light">
+                                <small class="text-muted d-block">Duración Real</small>
+                                <strong class="h4 text-dark"><field name="duration_real_minutes"/> <small>min</small></strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FORMULARIO DE ASIGNACIÓN -->
                     <group>
-                        <group string="Asignación y Planificación">
-                            <field name="route_id" attrs="{'readonly': [('state', 'in', ('completed', 'cancelled'))]}"/>
-                            <field name="vehicle_id" attrs="{'readonly': [('state', 'in', ('completed', 'cancelled'))]}"/>
-                            <field name="driver_id" attrs="{'readonly': [('state', 'in', ('completed', 'cancelled'))]}"/>
+                        <group string="1. Asignación del Recorrido">
+                            <field name="route_id" placeholder="Seleccione la ruta universitaria..." attrs="{'readonly': [('state', 'in', ('completed', 'cancelled'))]}"/>
+                            <field name="vehicle_id" placeholder="Seleccione el bus/vehículo..." attrs="{'readonly': [('state', 'in', ('completed', 'cancelled'))]}"/>
+                            <field name="driver_id" placeholder="Conductor asignado..." attrs="{'readonly': [('state', 'in', ('completed', 'cancelled'))]}"/>
                             <field name="date" attrs="{'readonly': [('state', 'in', ('completed', 'cancelled'))]}"/>
                         </group>
-                        <group string="Control Horario">
+                        <group string="2. Control Horario y Programación">
                             <field name="scheduled_start_time" attrs="{'readonly': [('state', 'in', ('completed', 'cancelled'))]}"/>
                             <field name="scheduled_end_time" attrs="{'readonly': [('state', 'in', ('completed', 'cancelled'))]}"/>
                             <field name="actual_start_time" attrs="{'readonly': [('state', '=', 'completed')]}"/>
                             <field name="actual_end_time" attrs="{'readonly': [('state', '=', 'completed')]}"/>
+                            <field name="has_deviations" invisible="1"/>
                         </group>
                     </group>
 
-                    <group string="Métricas del Recorrido Calculadas">
-                        <group>
-                            <field name="estimated_distance"/>
-                            <field name="actual_distance"/>
-                            <field name="distance_diff"/>
-                        </group>
-                        <group>
-                            <field name="duration_real_minutes"/>
-                            <field name="delay_minutes"/>
-                            <field name="stop_completion_rate" widget="progressbar"/>
-                            <field name="has_deviations"/>
-                        </group>
-                    </group>
-
+                    <!-- PESTAÑAS: MAPA INTERACTIVO Y DETALLES -->
                     <notebook>
-                        <page string="Control de Puntos de Parada" name="stop_checks">
+                        <page string="Mapa Interactivo y Puntos de Control" name="map_tracking">
+                            <!-- VISOR DE MAPA LEAFLET -->
+                            <div class="mb-3">
+                                <field name="trip_map_html" widget="html" nolabel="1"/>
+                            </div>
+
+                            <label for="stop_check_ids" string="Auditoría de Cumplimiento de Paradas" class="o_form_label h5 mb-2 d-block"/>
                             <field name="stop_check_ids">
                                 <tree editable="bottom" 
                                       decoration-success="status == 'visited'" 
                                       decoration-warning="status == 'delayed'" 
                                       decoration-danger="status == 'missed'">
-                                    <field name="sequence"/>
+                                    <field name="sequence" string="#"/>
                                     <field name="name"/>
                                     <field name="scheduled_time"/>
                                     <field name="actual_arrival_time"/>
@@ -214,15 +273,18 @@
                         </page>
 
                         <page string="Historial de Coordenadas GPS" name="points">
-                            <div class="mb-2">
-                                <button name="action_sync_points_from_traccar" 
-                                        type="object" 
-                                        string="Obtener Puntos desde Traccar Server" 
-                                        class="btn btn-sm btn-outline-primary" 
-                                        icon="fa-download"/>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <button name="action_sync_points_from_traccar" 
+                                            type="object" 
+                                            string="Obtener Puntos desde Traccar Server" 
+                                            class="btn btn-sm btn-outline-primary me-2" 
+                                            icon="fa-download"/>
+                                </div>
+                                <span class="text-muted small">Total registros: <field name="point_count" class="oe_inline"/> coordenadas</span>
                             </div>
                             <field name="point_ids" readonly="1">
-                                <tree limit="30">
+                                <tree limit="25">
                                     <field name="timestamp"/>
                                     <field name="latitude"/>
                                     <field name="longitude"/>
@@ -233,7 +295,7 @@
                             </field>
                         </page>
 
-                        <page string="Observaciones Generales" name="notes">
+                        <page string="Observaciones y Notas" name="notes">
                             <field name="notes" placeholder="Notas adicionales del recorrido, condiciones climáticas, estado de la vía..."/>
                         </page>
                     </notebook>
@@ -286,4 +348,3 @@
         </field>
     </record>
 </odoo>
-

@@ -16,7 +16,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   if (!isOpen) return null;
 
   const [user, setUser] = useState(localStorage.getItem('traccar_user') || 'juanperzezss@gmail.com');
-  const [password, setPassword] = useState(localStorage.getItem('traccar_pass') || '');
+  const [password, setPassword] = useState(localStorage.getItem('traccar_pass') || 'asd1230A');
   const [testStatus, setTestStatus] = useState<{ type: 'idle' | 'testing' | 'success' | 'error'; message: string }>({
     type: 'idle',
     message: '',
