@@ -25,6 +25,9 @@
         <field name="model">transport.route</field>
         <field name="arch" type="xml">
             <form string="Ruta de Transporte Universitario">
+                <header>
+                    <button name="action_open_map_editor" type="object" string="Diseñar Trazado en Pantalla Completa" class="btn-primary" icon="fa-pencil"/>
+                </header>
                 <sheet>
                     <widget name="web_ribbon" title="Archivada" bg_color="bg-danger" attrs="{'invisible': [('active', '=', True)]}"/>
                     <widget name="web_ribbon" title="Activa" bg_color="bg-success" attrs="{'invisible': [('active', '=', False)]}"/>
@@ -67,7 +70,14 @@
                     </group>
 
                     <notebook>
-                        <page string="Mapa del Trazado y Paradas" name="map_stops">
+                        <page string="Diseñador y Trazado de Ruta" name="map_stops">
+                            <div class="alert alert-info py-2 px-3 small d-flex align-items-center justify-content-between mb-2" role="status">
+                                <div>
+                                    <i class="fa fa-info-circle me-1" title="Información"></i>
+                                    <strong>Diseñador de Trazado:</strong> Haga clic sobre el mapa para marcar los puntos por donde debe circular el bus. Con la casilla <em>"Seguir Calles"</em> activa, el sistema genera el trazado siguiendo las curvas viales reales y calcula la distancia oficial en kilómetros. Al presionar <strong>"Guardar Trazado"</strong> en el mapa, el recorrido queda registrado para supervisar desvíos en tiempo real.
+                                </div>
+                            </div>
+
                             <!-- MAPA INTERACTIVO DE LA RUTA -->
                             <div class="mb-3">
                                 <field name="route_map_html" widget="html" nolabel="1"/>

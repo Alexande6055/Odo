@@ -86,62 +86,44 @@ class TransportRoute(models.Model):
         ('code_unique', 'unique(code)', 'El código de ruta debe ser único.')
     ]
 
-    @api.depends('stop_ids', 'name')
+    @api.depends('stop_ids', 'name', 'reference_coordinates')
     def _compute_route_map_html(self):
-        import urllib.parse
-        import json
-        ICP = self.env['ir.config_parameter'].sudo()
-        map_base = (ICP.get_param('fleet_traccar.map_url') or 'http://localhost:3000').strip().rstrip('/')
-        user = (ICP.get_param('fleet_traccar.user') or '').strip()
-        password = ICP.get_param('fleet_traccar.password') or ''
-
         for route in self:
-            stops_data = []
-            for s in route.stop_ids.sorted('sequence'):
-                stops_data.append({
-                    'name': s.name,
-                    'seq': s.sequence,
-                    'lat': s.latitude,
-                    'lon': s.longitude,
-                    'status': 'pending',
-                    'schedTime': f"+{s.expected_offset_minutes}m",
-                })
-            query_params = {
-                'compact': 'true',
-                'routeName': route.name or '',
-            }
-            if user:
-                query_params['user'] = user
-            if password:
-                query_params['pass'] = password
-            if stops_data:
-                query_params['stops'] = json.dumps(stops_data)
+            if not route.id:
+                route.route_map_html = '<div class="alert alert-info py-2 px-3 small">Guarde la ruta para activar el diseñador interactivo de trazado y paradas.</div>'
+                continue
 
-            map_url = f"{map_base}/?{urllib.parse.urlencode(query_params)}"
-            full_url = map_url.replace('&compact=true', '').replace('?compact=true', '')
-            route_title = route.name or 'Trazado Oficial de Ruta'
-
+            editor_url = f"/transport/route/map_editor/{route.id}"
+            route_title = route.name or 'Trazado Oficial'
             route.route_map_html = f'''
-                <div class="card shadow border-0 my-2 rounded-3 overflow-hidden">
+                <div class="card shadow-sm border-0 my-2 rounded-3 overflow-hidden">
                     <div class="card-header text-white d-flex justify-content-between align-items-center py-2 px-3" style="background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);">
                         <div class="d-flex align-items-center gap-2">
                             <span class="badge rounded-pill bg-primary px-2 py-1">
-                                <i class="fa fa-road me-1"></i>Ruta Oficial
+                                <i class="fa fa-pencil me-1"></i>Diseñador Interactivo de Trazado
                             </span>
                             <span class="fw-bold text-white small">{route_title}</span>
                         </div>
-                        <a href="{full_url}" target="_blank" class="btn btn-sm btn-outline-info text-white">
-                            <i class="fa fa-external-link me-1"></i>Pantalla Completa
+                        <a href="{editor_url}" target="_blank" class="btn btn-sm btn-outline-info text-white">
+                            <i class="fa fa-external-link me-1"></i>Abrir en Pantalla Completa
                         </a>
                     </div>
-                    <div class="card-body p-0 position-relative" style="height: 500px; background: #0f172a;">
-                        <iframe src="{map_url}" 
-                                style="width: 100%; height: 500px; border: none; display: block;" 
+                    <div class="card-body p-0 position-relative" style="height: 540px; background: #0f172a;">
+                        <iframe src="{editor_url}" 
+                                style="width: 100%; height: 540px; border: none; display: block;" 
                                 allow="geolocation">
                         </iframe>
                     </div>
                 </div>
             '''
+
+    def action_open_map_editor(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_url',
+            'url': f'/transport/route/map_editor/{self.id}',
+            'target': 'new',
+        }
 
     @api.depends('stop_ids', 'trip_ids')
     def _compute_counts(self):
