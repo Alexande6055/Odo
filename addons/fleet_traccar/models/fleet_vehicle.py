@@ -122,6 +122,8 @@ class FleetVehicle(models.Model):
         """Obtiene la configuración del servidor Traccar desde los parámetros del sistema."""
         ICP = self.env['ir.config_parameter'].sudo()
         url = (ICP.get_param('fleet_traccar.server_url') or 'http://traccar:8082').strip().rstrip('/')
+        from .geo_utils import get_effective_traccar_url
+        url = get_effective_traccar_url(url)
         user = (ICP.get_param('fleet_traccar.user') or '').strip()
         password = ICP.get_param('fleet_traccar.password') or ''
         return url, user, password

@@ -39,21 +39,24 @@ class ResConfigSettings(models.TransientModel):
         if not url:
             raise UserError(_("Debe ingresar la URL del servidor Traccar."))
 
+        from .geo_utils import get_effective_traccar_url
+        effective_url = get_effective_traccar_url(url)
+
         # 1. Probar conectividad al servidor
         try:
-            server_res = requests.get(f"{url}/api/server", timeout=5)
+            server_res = requests.get(f"{effective_url}/api/server", timeout=5)
             if server_res.status_code != 200:
                 raise UserError(_("El servidor respondió con código HTTP %s al consultar el estado.") % server_res.status_code)
             server_info = server_res.json()
             version = server_info.get('version', 'desconocida')
         except requests.exceptions.RequestException as e:
-            raise UserError(_("No se pudo conectar al contenedor Traccar en '%s'. Verifique que la red Docker esté configurada y el contenedor esté activo.\nDetalle: %s") % (url, str(e)))
+            raise UserError(_("No se pudo conectar al servidor Traccar en '%s'. Verifique que el servicio esté activo y el puerto accesible.\nDetalle: %s") % (url, str(e)))
 
         # 2. Si se proporcionó usuario y contraseña, probar autenticación
         if user and password:
             try:
                 auth_res = requests.post(
-                    f"{url}/api/session",
+                    f"{effective_url}/api/session",
                     data={'email': user, 'password': password},
                     timeout=5
                 )

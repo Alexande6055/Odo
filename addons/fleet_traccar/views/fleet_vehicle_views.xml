@@ -144,7 +144,7 @@
                     <span t-if="record.traccar_status.raw_value == 'offline'" class="badge rounded-pill bg-danger text-white px-2 py-1">
                         <i class="fa fa-circle-o text-white me-1" title="Offline"/> Desconectado
                     </span>
-                    <span t-if="!record.traccar_status.raw_value or record.traccar_status.raw_value in ('unknown', 'desconocido')" class="badge rounded-pill bg-secondary text-white px-2 py-1">
+                    <span t-if="!record.traccar_status.raw_value or record.traccar_status.raw_value == 'unknown' or record.traccar_status.raw_value == 'desconocido'" class="badge rounded-pill bg-secondary text-white px-2 py-1">
                         <i class="fa fa-question-circle text-white me-1" title="Standby"/> Standby
                     </span>
 
