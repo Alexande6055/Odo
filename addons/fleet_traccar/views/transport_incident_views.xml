@@ -122,11 +122,59 @@
         </field>
     </record>
 
+    <!-- VISTA KANBAN DE INCIDENCIAS -->
+    <record id="view_transport_trip_incident_kanban" model="ir.ui.view">
+        <field name="name">transport.trip.incident.kanban</field>
+        <field name="model">transport.trip.incident</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="severity" quick_create="false">
+                <field name="name"/>
+                <field name="incident_type"/>
+                <field name="severity"/>
+                <field name="trip_id"/>
+                <field name="route_id"/>
+                <field name="vehicle_id"/>
+                <field name="timestamp"/>
+                <field name="delay_minutes"/>
+                <field name="deviation_distance"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click p-3 mb-2 shadow-sm border rounded bg-white">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="badge rounded-pill bg-light text-dark border">
+                                    <field name="incident_type" widget="badge"/>
+                                </span>
+                                <field name="severity" widget="badge" 
+                                       decoration-danger="severity == 'high'" 
+                                       decoration-warning="severity == 'medium'" 
+                                       decoration-info="severity == 'low'"/>
+                            </div>
+                            <strong class="h6 text-danger d-block mb-1"><field name="name"/></strong>
+                            <div class="text-muted small mb-2">
+                                <i class="fa fa-road me-1 text-primary" title="Ruta"/> <field name="route_id"/><br/>
+                                <i class="fa fa-bus me-1 text-info" title="Vehículo"/> <field name="vehicle_id"/> • <field name="trip_id"/><br/>
+                                <i class="fa fa-clock-o me-1 text-secondary" title="Fecha/Hora"/> <field name="timestamp"/>
+                            </div>
+                            <div class="border-top pt-2 d-flex justify-content-between align-items-center text-muted small">
+                                <span class="text-warning fw-bold">
+                                    <i class="fa fa-clock-o me-1" title="Retraso"/> <field name="delay_minutes"/> min
+                                </span>
+                                <span class="text-danger fw-bold">
+                                    <i class="fa fa-map-marker me-1" title="Desvío"/> <field name="deviation_distance"/> m
+                                </span>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
     <!-- ACCIÓN DE VENTANA -->
     <record id="action_transport_trip_incident" model="ir.actions.act_window">
         <field name="name">Registro de Incidencias</field>
         <field name="res_model">transport.trip.incident</field>
-        <field name="view_mode">tree,graph,pivot,form</field>
+        <field name="view_mode">kanban,tree,graph,pivot,form</field>
         <field name="search_view_id" ref="view_transport_trip_incident_search"/>
     </record>
 </odoo>

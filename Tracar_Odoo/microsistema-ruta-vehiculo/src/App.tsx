@@ -4,6 +4,7 @@ import { Header } from './components/Header';
 import { VehicleCard } from './components/VehicleCard';
 import { PlaybackControls } from './components/PlaybackControls';
 import { SettingsModal } from './components/SettingsModal';
+import { StopsListOverlay } from './components/StopsListOverlay';
 import type { Device, Position, RoutePoint, MapTileLayer, StopPoint } from './types/traccar';
 import { TraccarService } from './services/traccarApi';
 
@@ -11,6 +12,7 @@ export function App() {
   const queryParams = new URLSearchParams(window.location.search);
   const paramDeviceId = queryParams.get('deviceId');
   const paramImei = queryParams.get('imei');
+  const paramRouteName = queryParams.get('routeName') || '';
   const isIframe = window.self !== window.top || queryParams.get('compact') === 'true';
   const autoRoute = queryParams.get('autoRoute') === 'true';
 
@@ -34,6 +36,9 @@ export function App() {
     }
   }
   const [stops] = useState<StopPoint[]>(initialStops);
+  const [isStopsVisible, setIsStopsVisible] = useState(initialStops.length > 0);
+  const [selectedStop, setSelectedStop] = useState<StopPoint | null>(null);
+  const [fitAllTrigger, setFitAllTrigger] = useState(0);
 
   const [devices, setDevices] = useState<Device[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
@@ -246,6 +251,10 @@ export function App() {
         isConnected={isConnected}
         isDemoMode={isDemoMode}
         isCompact={isIframe}
+        routeName={paramRouteName}
+        hasStops={stops.length > 0}
+        isStopsVisible={isStopsVisible}
+        onToggleStops={() => setIsStopsVisible(!isStopsVisible)}
         onSelectDevice={(id) => {
           setSelectedDeviceId(id);
           setRoute([]);
@@ -270,10 +279,26 @@ export function App() {
           tileLayer={tileLayer}
           autoCenter={autoCenter}
           stops={stops}
+          selectedStop={selectedStop}
+          fitAllTrigger={fitAllTrigger}
           onSelectDevice={(deviceId) => {
             setSelectedDeviceId(deviceId);
           }}
         />
+
+        {/* Overlay Checklist de Paradas de la Ruta */}
+        {stops.length > 0 && isStopsVisible && (
+          <StopsListOverlay
+            stops={stops}
+            routeName={paramRouteName}
+            onSelectStop={(stop) => {
+              setSelectedStop(stop);
+            }}
+            onFitAllStops={() => {
+              setFitAllTrigger((prev) => prev + 1);
+            }}
+          />
+        )}
 
         {selectedDevice && (
           <VehicleCard

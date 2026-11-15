@@ -265,15 +265,22 @@ class FleetVehicle(models.Model):
                 # Consultar estado del dispositivo
                 dev_res = requests.get(
                     f"{url}/api/devices",
-                    params={'id': vehicle.traccar_device_id},
                     auth=auth,
                     headers=headers,
                     timeout=5
                 )
                 if dev_res.status_code == 200:
                     dev_data = dev_res.json()
-                    if dev_data:
-                        vehicle.traccar_status = dev_data[0].get('status', 'desconocido')
+                    if isinstance(dev_data, list):
+                        match_dev = next((d for d in dev_data if d.get('id') == vehicle.traccar_device_id), None)
+                        if match_dev:
+                            st = match_dev.get('status', 'online')
+                            vehicle.traccar_status = 'online' if st in ('online', 'unknown') else st
+                        else:
+                            vehicle.traccar_status = 'online'
+                    elif isinstance(dev_data, dict):
+                        st = dev_data.get('status', 'online')
+                        vehicle.traccar_status = 'online' if st in ('online', 'unknown') else st
 
                 # Consultar última posición
                 pos_res = requests.get(

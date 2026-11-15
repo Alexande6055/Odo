@@ -1,0 +1,317 @@
+/* ==========================================================================
+   ESTILOS ENTERPRISE Y HEADER PROFESIONAL - ODOO 16
+   Universidad Técnica de Ambato (UTA) - Sistema de Transporte GPS
+   ========================================================================== */
+
+/* 1. NAVBAR SUPERIOR GLOBAL (HEADER DE ODOO) */
+.o_main_navbar {
+    background: linear-gradient(135deg, #0b1329 0%, #172554 100%) !important;
+    border-bottom: 2px solid #0284c7 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+    height: 48px !important;
+    padding: 0 8px !important;
+    display: flex !important;
+    align-items: center !important;
+
+    /* Botón de cambio de aplicaciones (App Switcher) */
+    .o_navbar_apps_menu button.o_menu_toggle,
+    .o_menu_toggle {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-radius: 8px !important;
+        margin: 4px 6px !important;
+        padding: 6px 10px !important;
+        color: #38bdf8 !important;
+        border: 1px solid rgba(56, 189, 248, 0.25) !important;
+        transition: all 0.2s ease !important;
+
+        &:hover {
+            background: rgba(56, 189, 248, 0.2) !important;
+            color: #ffffff !important;
+            transform: scale(1.04) !important;
+        }
+    }
+
+    /* Nombre de la Aplicación Activa (Brand) */
+    .o_menu_brand {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        font-size: 15px !important;
+        letter-spacing: 0.3px !important;
+        padding: 6px 14px !important;
+        display: flex !important;
+        align-items: center !important;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+
+        &::before {
+            content: "UTA" !important;
+            display: inline-block !important;
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%) !important;
+            color: #ffffff !important;
+            font-size: 10px !important;
+            font-weight: 900 !important;
+            padding: 2px 6px !important;
+            border-radius: 4px !important;
+            margin-right: 8px !important;
+            letter-spacing: 0.8px !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+        }
+    }
+
+    /* Elementos del Menú de Secciones */
+    .o_menu_sections {
+        .o_nav_entry,
+        .dropdown-toggle {
+            color: #e2e8f0 !important;
+            font-weight: 500 !important;
+            font-size: 13px !important;
+            padding: 6px 12px !important;
+            border-radius: 6px !important;
+            margin: 0 2px !important;
+            transition: all 0.15s ease-in-out !important;
+
+            &:hover, &:focus {
+                background: rgba(255, 255, 255, 0.12) !important;
+                color: #38bdf8 !important;
+            }
+        }
+
+        .show > .dropdown-toggle {
+            background: rgba(56, 189, 248, 0.2) !important;
+            color: #ffffff !important;
+        }
+    }
+
+    /* Menú del Sistema a la Derecha (Systray) */
+    .o_menu_systray {
+        align-items: center !important;
+
+        /* Conmutador de Compañía */
+        .o_switch_company_menu {
+            .dropdown-toggle {
+                background: rgba(15, 23, 42, 0.6) !important;
+                border: 1px solid rgba(255, 255, 255, 0.15) !important;
+                border-radius: 20px !important;
+                padding: 4px 12px !important;
+                color: #f1f5f9 !important;
+                font-size: 12px !important;
+                font-weight: 600 !important;
+                margin-right: 6px !important;
+
+                &:hover {
+                    border-color: #38bdf8 !important;
+                    color: #38bdf8 !important;
+                }
+            }
+        }
+
+        /* Avatar del Usuario */
+        .o_user_menu {
+            img.rounded-circle,
+            .o_user_avatar {
+                border: 2px solid #38bdf8 !important;
+                box-shadow: 0 0 8px rgba(56, 189, 248, 0.4) !important;
+            }
+
+            .dropdown-toggle {
+                color: #f8fafc !important;
+                font-weight: 600 !important;
+                font-size: 12px !important;
+            }
+        }
+    }
+}
+
+/* 2. PANEL DE CONTROL (CONTROL PANEL / BREADCRUMBS) */
+.o_control_panel {
+    background: #ffffff !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04) !important;
+    padding: 10px 16px !important;
+
+    /* Breadcrumbs */
+    .breadcrumb {
+        font-size: 15px !important;
+        font-weight: 600 !important;
+
+        .breadcrumb-item {
+            color: #64748b !important;
+
+            &.active {
+                color: #0f172a !important;
+                font-weight: 700 !important;
+            }
+
+            a {
+                color: #0284c7 !important;
+                text-decoration: none !important;
+
+                &:hover {
+                    color: #0369a1 !important;
+                    text-decoration: underline !important;
+                }
+            }
+        }
+    }
+
+    /* Caja de Búsqueda */
+    .o_searchview {
+        border-radius: 12px !important;
+        border: 1px solid #cbd5e1 !important;
+        padding: 3px 8px !important;
+        transition: all 0.2s ease !important;
+
+        &:focus-within {
+            border-color: #0284c7 !important;
+            box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15) !important;
+        }
+    }
+}
+
+/* 3. BARRA DE ESTADO Y BOTONES DE FORMULARIO (STATUSBAR) */
+.o_form_statusbar {
+    background: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding: 8px 16px !important;
+    border-top-left-radius: 12px !important;
+    border-top-right-radius: 12px !important;
+
+    .o_statusbar_buttons {
+        gap: 6px !important;
+        display: flex !important;
+        align-items: center !important;
+
+        .btn {
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            font-size: 12.5px !important;
+            padding: 6px 14px !important;
+            transition: all 0.15s ease !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+
+            &.btn-primary {
+                background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+                border: none !important;
+                box-shadow: 0 2px 6px rgba(2, 132, 199, 0.35) !important;
+
+                &:hover {
+                    background: linear-gradient(135deg, #0369a1 0%, #075985 100%) !important;
+                    transform: translateY(-1px) !important;
+                    box-shadow: 0 4px 10px rgba(2, 132, 199, 0.45) !important;
+                }
+            }
+
+            &.btn-success {
+                background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+                border: none !important;
+                box-shadow: 0 2px 6px rgba(22, 163, 74, 0.3) !important;
+
+                &:hover {
+                    background: linear-gradient(135deg, #15803d 0%, #166534 100%) !important;
+                    transform: translateY(-1px) !important;
+                }
+            }
+
+            &.btn-info {
+                background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%) !important;
+                border: none !important;
+                color: #ffffff !important;
+            }
+        }
+    }
+
+    /* Etapas del Statusbar */
+    .o_statusbar_status {
+        .o_arrow_button {
+            font-size: 12px !important;
+            font-weight: 600 !important;
+
+            &.disabled {
+                opacity: 0.85 !important;
+            }
+
+            &.btn-primary {
+                background: #0284c7 !important;
+                border-color: #0284c7 !important;
+            }
+        }
+    }
+}
+
+/* 4. HOJA DE FORMULARIO (SHEET) Y CAJA DE BOTONES ESTADÍSTICOS */
+.o_form_sheet_bg {
+    background: #f1f5f9 !important;
+    padding: 16px !important;
+
+    .o_form_sheet {
+        border-radius: 14px !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+        padding: 24px !important;
+    }
+}
+
+.oe_button_box {
+    .oe_stat_button {
+        border-radius: 10px !important;
+        border: 1px solid #e2e8f0 !important;
+        margin: 2px !important;
+        transition: all 0.2s ease !important;
+        background: #ffffff !important;
+
+        &:hover {
+            background: #f8fafc !important;
+            border-color: #38bdf8 !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+            transform: translateY(-1px) !important;
+        }
+
+        .o_stat_info {
+            .o_stat_value {
+                font-weight: 700 !important;
+                font-size: 16px !important;
+            }
+            .o_stat_text {
+                font-size: 11px !important;
+                color: #64748b !important;
+                font-weight: 600 !important;
+            }
+        }
+    }
+}
+
+/* 5. TARJETAS KANBAN DE VEHÍCULOS Y FLOTA */
+.o_kanban_view .o_kanban_record {
+    border-radius: 12px !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    background: #ffffff !important;
+
+    &:hover {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.09) !important;
+        transform: translateY(-2px) !important;
+        border-color: #38bdf8 !important;
+    }
+
+    .o_kanban_image {
+        border-radius: 10px !important;
+        border: 1px solid #e2e8f0 !important;
+        background-color: #f8fafc !important;
+        overflow: hidden !important;
+    }
+
+    .o_kanban_record_title {
+        color: #0f172a !important;
+        font-weight: 700 !important;
+        font-size: 14px !important;
+    }
+
+    .badge {
+        font-weight: 600 !important;
+        letter-spacing: 0.2px !important;
+    }
+}
+
+

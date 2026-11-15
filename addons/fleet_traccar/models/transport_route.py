@@ -119,15 +119,19 @@ class TransportRoute(models.Model):
 
             map_url = f"{map_base}/?{urllib.parse.urlencode(query_params)}"
             full_url = map_url.replace('&compact=true', '').replace('?compact=true', '')
+            route_title = route.name or 'Trazado Oficial de Ruta'
 
             route.route_map_html = f'''
-                <div class="card shadow-sm border-0 my-2 rounded-3 overflow-hidden">
-                    <div class="card-header text-white d-flex justify-content-between align-items-center py-2 px-3" style="background-color: #0f172a;">
-                        <span class="fw-bold text-info">
-                            <i class="fa fa-map-marker text-cyan me-2"></i>Trazado de Ruta Oficial ({map_base})
-                        </span>
-                        <a href="{full_url}" target="_blank" class="btn btn-sm btn-info text-white">
-                            <i class="fa fa-external-link me-1"></i>Abrir en Pantalla Completa ({map_base})
+                <div class="card shadow border-0 my-2 rounded-3 overflow-hidden">
+                    <div class="card-header text-white d-flex justify-content-between align-items-center py-2 px-3" style="background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge rounded-pill bg-primary px-2 py-1">
+                                <i class="fa fa-road me-1"></i>Ruta Oficial
+                            </span>
+                            <span class="fw-bold text-white small">{route_title}</span>
+                        </div>
+                        <a href="{full_url}" target="_blank" class="btn btn-sm btn-outline-info text-white">
+                            <i class="fa fa-external-link me-1"></i>Pantalla Completa
                         </a>
                     </div>
                     <div class="card-body p-0 position-relative" style="height: 500px; background: #0f172a;">

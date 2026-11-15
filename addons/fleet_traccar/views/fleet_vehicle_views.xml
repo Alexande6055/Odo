@@ -6,6 +6,12 @@
         <field name="model">fleet.vehicle</field>
         <field name="inherit_id" ref="fleet.fleet_vehicle_view_form"/>
         <field name="arch" type="xml">
+            <!-- Ribbon de Estado GPS -->
+            <xpath expr="//div[@name='button_box']" position="before">
+                <widget name="web_ribbon" title="GPS Online" bg_color="bg-success" attrs="{'invisible': [('traccar_status', '!=', 'online')]}"/>
+                <widget name="web_ribbon" title="GPS Offline" bg_color="bg-danger" attrs="{'invisible': [('traccar_status', '!=', 'offline')]}"/>
+            </xpath>
+
             <!-- Botones de estado en la barra superior (button_box) -->
             <xpath expr="//div[@name='button_box']" position="inside">
                 <!-- Botón Mapa en Vivo Interactivo -->
@@ -110,6 +116,67 @@
                        optional="show"/>
                 <field name="last_speed" optional="show"/>
                 <field name="last_gps_update" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Herencia de la vista Kanban de Vehículos con Telemetría GPS Traccar -->
+    <record id="fleet_vehicle_view_kanban_inherit_traccar" model="ir.ui.view">
+        <field name="name">fleet.vehicle.kanban.inherit.traccar</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_kanban"/>
+        <field name="arch" type="xml">
+            <!-- Añadir campos de Traccar a la vista -->
+            <xpath expr="//field[@name='state_id']" position="after">
+                <field name="traccar_status"/>
+                <field name="last_speed"/>
+                <field name="last_gps_update"/>
+                <field name="gps_imei"/>
+                <field name="traccar_device_id"/>
+            </xpath>
+
+            <!-- Encabezado de Estado GPS y Velocidad sobre el título -->
+            <xpath expr="//strong[hasclass('o_kanban_record_title')]" position="before">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span t-if="record.traccar_status.raw_value == 'online'" class="badge rounded-pill bg-success text-white px-2 py-1 shadow-sm">
+                        <i class="fa fa-circle text-white me-1" title="Online"/> En Línea
+                    </span>
+                    <span t-if="record.traccar_status.raw_value == 'offline'" class="badge rounded-pill bg-danger text-white px-2 py-1">
+                        <i class="fa fa-circle-o text-white me-1" title="Offline"/> Desconectado
+                    </span>
+                    <span t-if="!record.traccar_status.raw_value or record.traccar_status.raw_value in ('unknown', 'desconocido')" class="badge rounded-pill bg-secondary text-white px-2 py-1">
+                        <i class="fa fa-question-circle text-white me-1" title="Standby"/> Standby
+                    </span>
+
+                    <span t-if="record.last_speed.raw_value &gt; 0" class="badge rounded-pill bg-info text-white px-2 py-1 shadow-sm">
+                        <i class="fa fa-tachometer me-1" title="Velocidad"/> <field name="last_speed"/> km/h
+                    </span>
+                    <span t-if="record.last_speed.raw_value == 0 and record.traccar_status.raw_value == 'online'" class="badge rounded-pill bg-light text-dark border px-2 py-1">
+                        <i class="fa fa-pause me-1 text-warning" title="Detenido"/> Detenido
+                    </span>
+                </div>
+            </xpath>
+
+            <!-- Telemetría e IMEI en la lista de detalles -->
+            <xpath expr="//div[hasclass('oe_kanban_details')]/ul" position="inside">
+                <li t-if="record.gps_imei.raw_value">
+                    <small class="text-muted"><i class="fa fa-microchip text-primary me-1" title="IMEI"/> IMEI: <field name="gps_imei"/></small>
+                </li>
+                <li t-if="record.last_gps_update.value">
+                    <small class="text-muted"><i class="fa fa-clock-o text-secondary me-1" title="Última Actualización GPS"/> GPS: <field name="last_gps_update"/></small>
+                </li>
+            </xpath>
+
+            <!-- Botones de Acción Directa en la Tarjeta Kanban -->
+            <xpath expr="//div[hasclass('oe_kanban_details')]" position="inside">
+                <div class="mt-2 pt-2 border-top d-flex align-items-center gap-1">
+                    <button name="action_open_traccar_map" type="object" class="btn btn-sm btn-info text-white flex-grow-1 py-1 px-2 d-flex align-items-center justify-content-center gap-1 shadow-sm" title="Abrir Mapa GPS en Vivo">
+                        <i class="fa fa-map-marker text-white" title="Mapa"/> Mapa en Vivo
+                    </button>
+                    <button name="action_sync_traccar_positions" type="object" class="btn btn-sm btn-outline-secondary py-1 px-2" title="Sincronizar Posición Traccar">
+                        <i class="fa fa-refresh text-primary" title="Sincronizar"/>
+                    </button>
+                </div>
             </xpath>
         </field>
     </record>

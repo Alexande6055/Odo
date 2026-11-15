@@ -54,56 +54,56 @@
                     </group>
 
                     <!-- TARJETAS RESUMEN DE INDICADORES PRINCIPALES -->
-                    <div class="row text-center my-3">
+                    <div class="row text-center my-3 g-3">
                         <div class="col-md-3">
-                            <div class="card p-3 shadow-sm border-primary">
-                                <span class="text-muted small">1. Cumplimiento Rutas</span>
-                                <h2 class="text-primary mb-0"><field name="m1_route_compliance_rate"/>%</h2>
+                            <div class="card p-3 shadow-sm border-0 rounded-3" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);">
+                                <span class="text-primary fw-bold small"><i class="fa fa-road me-1"/> 1. Cumplimiento Rutas</span>
+                                <h2 class="text-primary fw-bolder mb-0 mt-1"><field name="m1_route_compliance_rate"/>%</h2>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="card p-3 shadow-sm border-info">
-                                <span class="text-muted small">2. Puntualidad Global</span>
-                                <h2 class="text-info mb-0"><field name="m2_punctuality_rate"/>%</h2>
+                            <div class="card p-3 shadow-sm border-0 rounded-3" style="background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%);">
+                                <span class="text-info fw-bold small"><i class="fa fa-check-circle me-1"/> 2. Puntualidad Global</span>
+                                <h2 class="text-info fw-bolder mb-0 mt-1"><field name="m2_punctuality_rate"/>%</h2>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="card p-3 shadow-sm border-warning">
-                                <span class="text-muted small">3. Retraso Promedio</span>
-                                <h2 class="text-warning mb-0"><field name="m3_avg_delay_minutes"/> <small class="h6">min</small></h2>
+                            <div class="card p-3 shadow-sm border-0 rounded-3" style="background: linear-gradient(135deg, #fefce8 0%, #fef08a 100%);">
+                                <span class="text-warning fw-bold small"><i class="fa fa-clock-o me-1"/> 3. Retraso Promedio</span>
+                                <h2 class="text-warning fw-bolder mb-0 mt-1"><field name="m3_avg_delay_minutes"/> <small class="h6">min</small></h2>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="card p-3 shadow-sm border-success">
-                                <span class="text-muted small">4. Cobertura Paradas</span>
-                                <h2 class="text-success mb-0"><field name="m4_stops_compliance_rate"/>%</h2>
+                            <div class="card p-3 shadow-sm border-0 rounded-3" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);">
+                                <span class="text-success fw-bold small"><i class="fa fa-flag-checkered me-1"/> 4. Cobertura Paradas</span>
+                                <h2 class="text-success fw-bolder mb-0 mt-1"><field name="m4_stops_compliance_rate"/>%</h2>
                             </div>
                         </div>
                     </div>
 
-                    <div class="row text-center mb-3">
+                    <div class="row text-center mb-3 g-3">
                         <div class="col-md-3">
-                            <div class="card p-3 shadow-sm border-secondary">
-                                <span class="text-muted small">5. Tasa de Desviación</span>
-                                <h3 class="mb-0"><field name="m5_deviation_rate"/>%</h3>
+                            <div class="card p-3 shadow-sm border rounded-3 bg-white">
+                                <span class="text-muted small"><i class="fa fa-compass text-danger me-1"/> 5. Tasa de Desviación</span>
+                                <h3 class="fw-bold mb-0 mt-1 text-dark"><field name="m5_deviation_rate"/>%</h3>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="card p-3 shadow-sm border-secondary">
-                                <span class="text-muted small">6. Dif. Media Distancia</span>
-                                <h3 class="mb-0"><field name="m6_avg_distance_diff"/> <small class="h6">km</small></h3>
+                            <div class="card p-3 shadow-sm border rounded-3 bg-white">
+                                <span class="text-muted small"><i class="fa fa-exchange text-secondary me-1"/> 6. Dif. Media Distancia</span>
+                                <h3 class="fw-bold mb-0 mt-1 text-dark"><field name="m6_avg_distance_diff"/> <small class="h6">km</small></h3>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="card p-3 shadow-sm border-secondary">
-                                <span class="text-muted small">7. Tiempo Prom. Viaje</span>
-                                <h3 class="mb-0"><field name="m7_avg_duration_minutes"/> <small class="h6">min</small></h3>
+                            <div class="card p-3 shadow-sm border rounded-3 bg-white">
+                                <span class="text-muted small"><i class="fa fa-hourglass-2 text-dark me-1"/> 7. Tiempo Prom. Viaje</span>
+                                <h3 class="fw-bold mb-0 mt-1 text-dark"><field name="m7_avg_duration_minutes"/> <small class="h6">min</small></h3>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="card p-3 shadow-sm border-danger">
-                                <span class="text-muted small">8. Total Incidencias</span>
-                                <h3 class="text-danger mb-0"><field name="m8_total_incidents"/></h3>
+                            <div class="card p-3 shadow-sm border rounded-3 bg-white">
+                                <span class="text-muted small"><i class="fa fa-exclamation-triangle text-danger me-1"/> 8. Total Incidencias</span>
+                                <h3 class="text-danger fw-bold mb-0 mt-1"><field name="m8_total_incidents"/></h3>
                             </div>
                         </div>
                     </div>
@@ -114,29 +114,29 @@
                         </page>
 
                         <page string="Ficha Técnica: 4 Métricas de Calidad de Software (ISO/IEC 25010)" name="software_metrics">
-                            <div class="row text-center my-2">
+                            <div class="row text-center my-3 g-3">
                                 <div class="col-md-3">
-                                    <div class="p-2 border rounded bg-light">
-                                        <small class="text-muted d-block">CS1. Integridad GPS</small>
-                                        <strong class="h4 text-success"><field name="cs1_gps_integrity_rate"/>%</strong>
+                                    <div class="card p-3 border-0 shadow-sm rounded-3 bg-light">
+                                        <small class="text-muted d-block fw-bold"><i class="fa fa-shield text-success me-1"/> CS1. Integridad GPS</small>
+                                        <strong class="h3 text-success fw-bolder mt-1 d-block"><field name="cs1_gps_integrity_rate"/>%</strong>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
-                                    <div class="p-2 border rounded bg-light">
-                                        <small class="text-muted d-block">CS2. Exactitud Sync</small>
-                                        <strong class="h4 text-success"><field name="cs2_sync_accuracy_rate"/>%</strong>
+                                    <div class="card p-3 border-0 shadow-sm rounded-3 bg-light">
+                                        <small class="text-muted d-block fw-bold"><i class="fa fa-check-circle text-success me-1"/> CS2. Exactitud Sync</small>
+                                        <strong class="h3 text-success fw-bolder mt-1 d-block"><field name="cs2_sync_accuracy_rate"/>%</strong>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
-                                    <div class="p-2 border rounded bg-light">
-                                        <small class="text-muted d-block">CS3. Latencia Sistema</small>
-                                        <strong class="h4 text-primary"><field name="cs3_response_time_ms"/> ms</strong>
+                                    <div class="card p-3 border-0 shadow-sm rounded-3 bg-light">
+                                        <small class="text-muted d-block fw-bold"><i class="fa fa-bolt text-primary me-1"/> CS3. Latencia Sistema</small>
+                                        <strong class="h3 text-primary fw-bolder mt-1 d-block"><field name="cs3_response_time_ms"/> ms</strong>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
-                                    <div class="p-2 border rounded bg-light">
-                                        <small class="text-muted d-block">CS4. Precisión Detección</small>
-                                        <strong class="h4 text-info"><field name="cs4_incident_detection_accuracy"/>%</strong>
+                                    <div class="card p-3 border-0 shadow-sm rounded-3 bg-light">
+                                        <small class="text-muted d-block fw-bold"><i class="fa fa-bullseye text-info me-1"/> CS4. Precisión Detección</small>
+                                        <strong class="h3 text-info fw-bolder mt-1 d-block"><field name="cs4_incident_detection_accuracy"/>%</strong>
                                     </div>
                                 </div>
                             </div>

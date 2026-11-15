@@ -12,6 +12,8 @@ interface MapProps {
   tileLayer: MapTileLayer;
   autoCenter: boolean;
   stops?: StopPoint[];
+  selectedStop?: StopPoint | null;
+  fitAllTrigger?: number;
   onSelectDevice: (deviceId: number) => void;
 }
 
@@ -44,6 +46,8 @@ export const Map: React.FC<MapProps> = ({
   tileLayer,
   autoCenter,
   stops = [],
+  selectedStop,
+  fitAllTrigger,
   onSelectDevice,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -440,9 +444,59 @@ export const Map: React.FC<MapProps> = ({
     map.panTo(latLng, { animate: true, duration: 0.3 });
   }, [playbackIndex, route]);
 
+  // Smoothly pan & zoom to selected stop
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !selectedStop || !selectedStop.lat || !selectedStop.lon) return;
+    map.flyTo([selectedStop.lat, selectedStop.lon], 17, {
+      duration: 1.2,
+      easeLinearity: 0.25,
+    });
+  }, [selectedStop]);
+
+  // Fit all bounds (stops + vehicles + route)
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !fitAllTrigger) return;
+    const allBounds: L.LatLngExpression[] = [];
+    stops.forEach((s) => {
+      if (s.lat && s.lon) allBounds.push([s.lat, s.lon]);
+    });
+    positions.forEach((p) => {
+      if (p.latitude && p.longitude) allBounds.push([p.latitude, p.longitude]);
+    });
+    route.forEach((r) => {
+      if (r.latitude && r.longitude) allBounds.push([r.latitude, r.longitude]);
+    });
+    if (allBounds.length > 0) {
+      map.fitBounds(L.latLngBounds(allBounds), { padding: [60, 60], maxZoom: 16 });
+    }
+  }, [fitAllTrigger]);
+
   return (
     <div className="relative w-full h-full flex-1 min-h-[350px]">
       <div ref={mapContainerRef} className="absolute inset-0 w-full h-full" />
+
+      {/* Floating Modern Map Legend */}
+      <div className="absolute bottom-4 left-4 z-[900] glass-panel px-3 py-1.5 rounded-xl text-[10px] text-slate-300 border border-slate-700/60 shadow-lg flex flex-wrap items-center gap-2.5 pointer-events-auto backdrop-blur-md select-none">
+        <span className="font-bold text-slate-200 uppercase tracking-wider text-[9px] text-cyan-400">Leyenda:</span>
+        <div className="flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-sm" />
+          <span>Bus Online / Ok</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-amber-400 shadow-sm" />
+          <span>Retraso (&gt;5m)</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-rose-500 shadow-sm" />
+          <span>Omitida</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="w-3 h-1 rounded bg-cyan-400 shadow-sm" />
+          <span>Ruta</span>
+        </div>
+      </div>
     </div>
   );
 };

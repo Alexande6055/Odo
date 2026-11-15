@@ -49,7 +49,7 @@
                 <field name="stop_completion_rate"/>
                 <templates>
                     <t t-name="kanban-box">
-                        <div class="oe_kanban_global_click p-3 mb-2 shadow-sm border rounded">
+                        <div class="oe_kanban_global_click p-3 mb-2 shadow-sm border rounded bg-white">
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <strong class="h6 mb-0 text-primary"><field name="name"/></strong>
                                 <field name="compliance_status" widget="badge" 
@@ -58,13 +58,16 @@
                                        decoration-danger="compliance_status == 'non_compliant'"/>
                             </div>
                             <div class="text-muted small mb-2">
-                                <i class="fa fa-road me-1" title="Ruta"/> <field name="route_id"/><br/>
-                                <i class="fa fa-bus me-1" title="Vehículo"/> <field name="vehicle_id"/><br/>
-                                <i class="fa fa-calendar me-1" title="Fecha"/> <field name="date"/>
+                                <div class="text-truncate fw-semibold text-dark"><i class="fa fa-road text-primary me-1" title="Ruta"/> <field name="route_id"/></div>
+                                <div><i class="fa fa-bus text-info me-1" title="Vehículo"/> <field name="vehicle_id"/></div>
+                                <div><i class="fa fa-calendar text-secondary me-1" title="Fecha"/> <field name="date"/></div>
                             </div>
                             <div class="border-top pt-2 d-flex justify-content-between align-items-center">
-                                <span class="small">
-                                    Retraso: <strong><field name="delay_minutes"/> min</strong>
+                                <span class="small" t-if="record.delay_minutes.raw_value">
+                                    Retraso: <strong class="text-warning"><field name="delay_minutes"/> min</strong>
+                                </span>
+                                <span class="small" t-if="!record.delay_minutes.raw_value">
+                                    <strong class="text-success"><i class="fa fa-check me-1"/>A tiempo</strong>
                                 </span>
                                 <span class="small">
                                     Paradas: <strong><field name="stop_completion_rate"/>%</strong>
@@ -138,6 +141,10 @@
                     <field name="state" widget="statusbar" statusbar_visible="draft,in_progress,completed"/>
                 </header>
                 <sheet>
+                    <widget name="web_ribbon" title="Puntual" bg_color="bg-success" attrs="{'invisible': [('compliance_status', '!=', 'compliant')]}"/>
+                    <widget name="web_ribbon" title="Con Retraso" bg_color="bg-warning" attrs="{'invisible': [('compliance_status', '!=', 'delayed')]}"/>
+                    <widget name="web_ribbon" title="Incumplido" bg_color="bg-danger" attrs="{'invisible': [('compliance_status', '!=', 'non_compliant')]}"/>
+
                     <!-- BOTONES INTELIGENTES (STAT BUTTONS) -->
                     <div class="oe_button_box" name="button_box">
                         <button name="action_view_stops" 
@@ -188,27 +195,27 @@
                     <!-- TARJETAS RESUMEN DE MÉTRICAS RÁPIDAS -->
                     <div class="row text-center my-3 g-2" attrs="{'invisible': [('state', '=', 'draft')]}">
                         <div class="col-md-3">
-                            <div class="p-2 border rounded shadow-sm bg-light">
-                                <small class="text-muted d-block">Retraso Acumulado</small>
-                                <strong class="h4 text-warning"><field name="delay_minutes"/> <small>min</small></strong>
+                            <div class="card p-2 border-0 shadow-sm rounded-3" style="background: linear-gradient(135deg, #fefce8 0%, #fef08a 100%);">
+                                <small class="text-warning fw-bold d-block"><i class="fa fa-clock-o me-1"/> Retraso Acumulado</small>
+                                <strong class="h4 text-warning fw-bolder mt-1 d-block"><field name="delay_minutes"/> <small class="h6">min</small></strong>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="p-2 border rounded shadow-sm bg-light">
-                                <small class="text-muted d-block">Cumplimiento Paradas</small>
-                                <strong class="h4 text-success"><field name="stop_completion_rate"/>%</strong>
+                            <div class="card p-2 border-0 shadow-sm rounded-3" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);">
+                                <small class="text-success fw-bold d-block"><i class="fa fa-flag-checkered me-1"/> Cumplimiento Paradas</small>
+                                <strong class="h4 text-success fw-bolder mt-1 d-block"><field name="stop_completion_rate"/>%</strong>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="p-2 border rounded shadow-sm bg-light">
-                                <small class="text-muted d-block">Distancia Real / Est.</small>
-                                <strong class="h4 text-primary"><field name="actual_distance"/> / <field name="estimated_distance"/> <small>km</small></strong>
+                            <div class="card p-2 border-0 shadow-sm rounded-3" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);">
+                                <small class="text-primary fw-bold d-block"><i class="fa fa-tachometer me-1"/> Distancia Real / Est.</small>
+                                <strong class="h4 text-primary fw-bolder mt-1 d-block"><field name="actual_distance"/> / <field name="estimated_distance"/> <small class="h6">km</small></strong>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="p-2 border rounded shadow-sm bg-light">
-                                <small class="text-muted d-block">Duración Real</small>
-                                <strong class="h4 text-dark"><field name="duration_real_minutes"/> <small>min</small></strong>
+                            <div class="card p-2 border-0 shadow-sm rounded-3" style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);">
+                                <small class="text-dark fw-bold d-block"><i class="fa fa-hourglass-half me-1"/> Duración Real</small>
+                                <strong class="h4 text-dark fw-bolder mt-1 d-block"><field name="duration_real_minutes"/> <small class="h6">min</small></strong>
                             </div>
                         </div>
                     </div>
