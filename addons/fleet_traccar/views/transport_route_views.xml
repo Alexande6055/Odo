@@ -10,8 +10,11 @@
                 <field name="name"/>
                 <field name="origin"/>
                 <field name="destination"/>
-                <field name="estimated_distance" sum="Total km"/>
+                <field name="outbound_distance" sum="Total km Ida"/>
+                <field name="return_distance" sum="Total km Regreso"/>
                 <field name="estimated_duration"/>
+                <field name="return_duration"/>
+                <field name="layover_duration"/>
                 <field name="stop_count"/>
                 <field name="trip_count"/>
                 <field name="active" widget="boolean_toggle"/>
@@ -56,14 +59,34 @@
                     </div>
 
                     <group>
-                        <group string="Trayecto y Distancias">
-                            <field name="origin"/>
-                            <field name="destination"/>
-                            <field name="estimated_distance"/>
-                            <field name="estimated_duration"/>
+                        <group string="🔵 Tramo de IDA (Salida)">
+                            <field name="origin" string="Origen Ida (1er Vértice)"/>
+                            <field name="destination" string="Destino Ida (Último Vértice)"/>
+                            <field name="outbound_distance" readonly="1"/>
+                            <label for="estimated_duration" string="Duración Estimada Ida"/>
+                            <div class="o_row">
+                                <field name="estimated_duration"/>
+                                <span class="text-muted">min (incluye paradas)</span>
+                            </div>
                         </group>
-                        <group string="Parámetros de Tolerancia">
+                        <group string="🟠 Tramo de REGRESO (Retorno)">
+                            <field name="origin_return" string="Origen Retorno (1er Vértice)"/>
+                            <field name="destination_return" string="Destino Retorno (Último Vértice)"/>
+                            <field name="return_distance" readonly="1"/>
+                            <label for="return_duration" string="Duración Estimada Retorno"/>
+                            <div class="o_row">
+                                <field name="return_duration"/>
+                                <span class="text-muted">min (incluye paradas)</span>
+                            </div>
+                            <field name="layover_duration" string="Espera en Cabecera (min)"/>
+                        </group>
+                    </group>
+                    <group string="Parámetros Globales y Tolerancia">
+                        <group>
+                            <field name="estimated_distance" readonly="1"/>
                             <field name="allowed_deviation_meters"/>
+                        </group>
+                        <group>
                             <field name="active"/>
                             <field name="color" widget="color_picker"/>
                         </group>
@@ -74,7 +97,7 @@
                             <div class="alert alert-info py-2 px-3 small d-flex align-items-center justify-content-between mb-2" role="status">
                                 <div>
                                     <i class="fa fa-info-circle me-1" title="Información"></i>
-                                    <strong>Diseñador de Trazado:</strong> Haga clic sobre el mapa para marcar los puntos por donde debe circular el bus. Con la casilla <em>"Seguir Calles"</em> activa, el sistema genera el trazado siguiendo las curvas viales reales y calcula la distancia oficial en kilómetros. Al presionar <strong>"Guardar Trazado"</strong> en el mapa, el recorrido queda registrado para supervisar desvíos en tiempo real.
+                                    <strong>Diseñador Bidireccional:</strong> Traza la <strong>Línea Azul (Ida)</strong> y la <strong>Línea Naranja (Regreso)</strong> de forma independiente sobre el mapa. El primer y último vértice de cada línea determinan automáticamente el <em>Punto de Origen</em> y <em>Destino</em>. Al guardar, las coordenadas quedan registradas para verificar desvíos según el sentido del viaje.
                                 </div>
                             </div>
 
@@ -88,11 +111,11 @@
                                 <tree editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="name"/>
+                                    <field name="stop_direction"/>
                                     <field name="latitude"/>
                                     <field name="longitude"/>
                                     <field name="expected_offset_minutes"/>
                                     <field name="proximity_radius"/>
-                                    <field name="time_tolerance"/>
                                     <field name="is_mandatory"/>
                                 </tree>
                             </field>
@@ -100,7 +123,8 @@
 
                         <page string="Coordenadas del Trazado Base" name="coordinates">
                             <group>
-                                <field name="reference_coordinates" widget="text" placeholder="[[-1.2687,-78.6258],[-1.2605,-78.6242],...]"/>
+                                <field name="reference_coordinates" widget="text" string="Coordenadas Ida (Azul)"/>
+                                <field name="return_coordinates" widget="text" string="Coordenadas Regreso (Naranja)"/>
                             </group>
                         </page>
 
@@ -140,8 +164,11 @@
                 <field name="code"/>
                 <field name="origin"/>
                 <field name="destination"/>
-                <field name="estimated_distance"/>
+                <field name="outbound_distance"/>
+                <field name="return_distance"/>
                 <field name="estimated_duration"/>
+                <field name="return_duration"/>
+                <field name="layover_duration"/>
                 <field name="stop_count"/>
                 <field name="trip_count"/>
                 <field name="color"/>
@@ -155,15 +182,21 @@
                                 </span>
                             </div>
                             <h5 class="fw-bold text-dark mb-1"><field name="name"/></h5>
-                            <div class="text-muted small my-2 py-1 border-top border-bottom d-flex align-items-center justify-content-between">
-                                <span><i class="fa fa-map-marker text-success me-1" title="Origen"/> <field name="origin"/></span>
-                                <i class="fa fa-long-arrow-right text-muted mx-2" title="Hacia"/>
-                                <span><i class="fa fa-map-marker text-danger me-1" title="Destino"/> <field name="destination"/></span>
+                            <div class="text-muted small my-2 py-1 border-top border-bottom">
+                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                    <span><span class="badge bg-primary text-white me-1">IDA</span> <field name="origin"/></span>
+                                    <i class="fa fa-long-arrow-right text-muted mx-1" title="Hacia"/>
+                                    <span><field name="destination"/></span>
+                                </div>
+                                <div class="d-flex justify-content-between text-secondary">
+                                    <span><i class="fa fa-road me-1" title="Distancia Ida"/> <field name="outbound_distance"/> km</span>
+                                    <span><i class="fa fa-clock-o me-1" title="Tiempo Ida"/> <field name="estimated_duration"/> min</span>
+                                </div>
                             </div>
                             <div class="d-flex justify-content-between align-items-center pt-1 text-muted small">
-                                <span><i class="fa fa-road me-1" title="Distancia"/> <field name="estimated_distance"/> km</span>
-                                <span><i class="fa fa-clock-o me-1" title="Tiempo"/> <field name="estimated_duration"/> min</span>
-                                <span><i class="fa fa-bus text-info me-1" title="Viajes"/> <field name="trip_count"/> Viajes</span>
+                                <span><span class="badge bg-warning text-dark me-1">REGRESO</span> <field name="return_distance"/> km (<field name="return_duration"/>m)</span>
+                                <span t-if="record.layover_duration.raw_value"><i class="fa fa-coffee me-1" title="Espera"/> <field name="layover_duration"/> min espera</span>
+                                <span><i class="fa fa-bus text-info me-1" title="Viajes"/> <field name="trip_count"/></span>
                             </div>
                         </div>
                     </t>

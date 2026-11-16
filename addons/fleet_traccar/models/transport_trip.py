@@ -74,12 +74,27 @@ class TransportTrip(models.Model):
         ('non_compliant', 'Incumplido / No Conforme')
     ], string='Evaluación de Cumplimiento', default='pending', store=True, compute='_compute_compliance_status')
 
+    trip_direction = fields.Selection([
+        ('outbound', 'Ida / Salida'),
+        ('inbound', 'Regreso / Retorno'),
+    ], string='Sentido del Recorrido', default='outbound', required=True, index=True)
+
     estimated_distance = fields.Float(
         string='Distancia Estimada (km)',
-        related='route_id.estimated_distance',
+        compute='_compute_estimated_distance',
         store=True,
         digits=(6, 2)
     )
+
+    @api.depends('route_id', 'trip_direction', 'route_id.outbound_distance', 'route_id.return_distance', 'route_id.estimated_distance')
+    def _compute_estimated_distance(self):
+        for trip in self:
+            if not trip.route_id:
+                trip.estimated_distance = 0.0
+            elif trip.trip_direction == 'inbound':
+                trip.estimated_distance = trip.route_id.return_distance or trip.route_id.estimated_distance
+            else:
+                trip.estimated_distance = trip.route_id.outbound_distance or trip.route_id.estimated_distance
     actual_distance = fields.Float(
         string='Distancia Real (km)',
         digits=(8, 2),
@@ -297,10 +312,11 @@ class TransportTrip(models.Model):
             if checks:
                 self.write({'stop_check_ids': checks})
 
-    @api.onchange('route_id', 'scheduled_start_time')
+    @api.onchange('route_id', 'trip_direction', 'scheduled_start_time')
     def _onchange_route_schedule(self):
         if self.route_id and self.scheduled_start_time:
-            self.scheduled_end_time = self.scheduled_start_time + timedelta(minutes=self.route_id.estimated_duration or 30)
+            dur = self.route_id.return_duration if self.trip_direction == 'inbound' else self.route_id.estimated_duration
+            self.scheduled_end_time = self.scheduled_start_time + timedelta(minutes=dur or 25.0)
 
     @api.depends('actual_start_time', 'actual_end_time', 'scheduled_end_time',
                  'actual_distance', 'estimated_distance', 'stop_check_ids.status',
@@ -346,10 +362,45 @@ class TransportTrip(models.Model):
             has_missed = bool(trip.stop_check_ids.filtered(lambda s: s.status == 'missed'))
             if trip.has_deviations or has_missed or trip.stop_completion_rate < 80.0:
                 trip.compliance_status = 'non_compliant'
-            elif trip.delay_minutes > 5.0 or bool(trip.incident_ids.filtered(lambda i: i.incident_type == 'delay')):
+            elif trip.delay_minutes > 0.0 or bool(trip.incident_ids.filtered(lambda i: i.incident_type == 'delay')):
                 trip.compliance_status = 'delayed'
             else:
                 trip.compliance_status = 'compliant'
+
+    def action_create_return_trip(self):
+        """
+        Genera automáticamente el tramo de retorno (o siguiente tramo de ida) para la misma ruta,
+        calculando la hora de salida con el tiempo de espera en cabecera (layover_duration).
+        """
+        self.ensure_one()
+        next_dir = 'inbound' if self.trip_direction == 'outbound' else 'outbound'
+        dir_name = _('Retorno / Regreso') if next_dir == 'inbound' else _('Salida / Ida')
+
+        base_time = self.actual_end_time or self.scheduled_end_time or fields.Datetime.now()
+        layover = self.route_id.layover_duration if self.route_id.layover_duration is not False else 15.0
+        start_next = base_time + timedelta(minutes=layover)
+        dur = self.route_id.return_duration if next_dir == 'inbound' else self.route_id.estimated_duration
+        end_next = start_next + timedelta(minutes=dur or 25.0)
+
+        new_trip = self.create({
+            'route_id': self.route_id.id,
+            'trip_direction': next_dir,
+            'vehicle_id': self.vehicle_id.id,
+            'driver_id': self.driver_id.id if self.driver_id else False,
+            'date': start_next.date(),
+            'scheduled_start_time': start_next,
+            'scheduled_end_time': end_next,
+            'state': 'draft',
+        })
+
+        return {
+            'name': _('Recorrido de %s Creado') % dir_name,
+            'type': 'ir.actions.act_window',
+            'res_model': 'transport.trip',
+            'res_id': new_trip.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
 
     def action_start_trip(self):
         """Inicia el recorrido formalmente."""
@@ -524,20 +575,28 @@ class TransportTrip(models.Model):
                     delay_m = delta_sec / 60.0
                     check.delay_minutes = max(0.0, round(delay_m, 1))
 
-                    if delay_m > stop.time_tolerance:
+                    if delay_m > 0:
                         check.status = 'delayed'
+                        # Regla: Retraso <= 3 min es incidencia Baja, > 3 min es incidencia Media (sin margen de tolerancia)
+                        if delay_m <= 3.0:
+                            sev = 'low'
+                            sev_label = _("Baja (≤ 3 min)")
+                        else:
+                            sev = 'medium'
+                            sev_label = _("Media (> 3 min)")
+
                         incidents_to_create.append({
-                            'name': _("Retraso en parada: %s") % stop.name,
+                            'name': _("Retraso en parada: %s (%.1f min - %s)") % (stop.name, check.delay_minutes, sev_label),
                             'trip_id': self.id,
                             'stop_id': stop.id,
                             'incident_type': 'delay',
-                            'severity': 'medium',
+                            'severity': sev,
                             'timestamp': closest_point.timestamp,
                             'delay_minutes': check.delay_minutes,
                             'latitude': closest_point.latitude,
                             'longitude': closest_point.longitude,
-                            'description': _("Llegada registrada a las %s con un retraso de %.1f min (tolerancia: %d min).") % (
-                                closest_point.timestamp, check.delay_minutes, stop.time_tolerance
+                            'description': _("Llegada registrada a las %s con un retraso de %.1f min respecto al horario previsto (%s). Incidencia clasificada como severidad %s.") % (
+                                closest_point.timestamp, check.delay_minutes, check.scheduled_time, sev_label
                             )
                         })
                     else:
@@ -562,14 +621,45 @@ class TransportTrip(models.Model):
                     )
                 })
 
-        # 2. EVALUAR DESVIACIONES DE RUTA
-        # Si la ruta tiene coordenadas de referencia o usamos las coordenadas de las paradas
+        # 1.1 EVALUAR RETRASO AL COMPLETAR EL RECORRIDO (LLEGADA A DESTINO FINAL)
+        trip_end_time = self.actual_end_time or (points[-1].timestamp if points else False)
+        if trip_end_time and self.scheduled_end_time:
+            end_delta_sec = (trip_end_time - self.scheduled_end_time).total_seconds()
+            end_delay_m = end_delta_sec / 60.0
+            if end_delay_m > 0:
+                if end_delay_m <= 3.0:
+                    trip_sev = 'low'
+                    trip_sev_label = _("Baja (≤ 3 min)")
+                else:
+                    trip_sev = 'medium'
+                    trip_sev_label = _("Media (> 3 min)")
+
+                incidents_to_create.append({
+                    'name': _("Retraso en llegada a destino final (%.1f min - %s)") % (round(end_delay_m, 1), trip_sev_label),
+                    'trip_id': self.id,
+                    'incident_type': 'delay',
+                    'severity': trip_sev,
+                    'timestamp': trip_end_time,
+                    'delay_minutes': round(end_delay_m, 1),
+                    'latitude': points[-1].latitude if points else False,
+                    'longitude': points[-1].longitude if points else False,
+                    'description': _("El recorrido completó su destino a las %s con un retraso total de %.1f min respecto a la llegada programada (%s). Incidencia clasificada como severidad %s.") % (
+                        trip_end_time, round(end_delay_m, 1), self.scheduled_end_time, trip_sev_label
+                    )
+                })
+
+        # 2. EVALUAR DESVIACIONES DE RUTA SEGÚN SENTIDO (IDA O REGRESO)
         reference_path = []
-        if self.route_id.reference_coordinates:
+        if self.trip_direction == 'inbound' and self.route_id.return_coordinates:
+            try:
+                reference_path = json.loads(self.route_id.return_coordinates)
+            except Exception:
+                reference_path = []
+        elif self.route_id.reference_coordinates:
             try:
                 reference_path = json.loads(self.route_id.reference_coordinates)
             except Exception:
-                pass
+                reference_path = []
         if not reference_path and self.route_id.stop_ids:
             # Fallback: Usar la secuencia de paradas como ruta estimada
             reference_path = [(s.latitude, s.longitude) for s in self.route_id.stop_ids.sorted('sequence')]

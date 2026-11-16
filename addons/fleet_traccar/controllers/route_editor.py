@@ -12,24 +12,35 @@ class RouteEditorController(http.Controller):
     def map_editor(self, route_id, **kwargs):
         """
         Renderiza el Diseñador Interactivo de Rutas en Leaflet.
-        Permite hacer clic sobre el mapa para trazar la línea oficial por donde
-        debe circular el bus, calcular distancias y registrar paradas.
+        Gestiona simultáneamente el Trazado de Ida (Azul) y el Trazado de Regreso (Naranja),
+        calcula distancias independientes y determina el punto de origen (1er vértice) y
+        destino (último vértice) de cada sentido de forma automática.
         """
         route = request.env['transport.route'].browse(route_id)
         if not route.exists():
             return request.not_found()
 
-        # Parsear coordenadas de trazado existentes
-        existing_coords = []
+        # Coordenadas de Ida
+        existing_outbound = []
         if route.reference_coordinates:
             try:
                 parsed = json.loads(route.reference_coordinates)
                 if isinstance(parsed, list):
-                    existing_coords = parsed
+                    existing_outbound = parsed
             except Exception:
-                existing_coords = []
+                existing_outbound = []
 
-        # Paradas de la ruta
+        # Coordenadas de Regreso
+        existing_return = []
+        if route.return_coordinates:
+            try:
+                parsed = json.loads(route.return_coordinates)
+                if isinstance(parsed, list):
+                    existing_return = parsed
+            except Exception:
+                existing_return = []
+
+        # Paradas registradas
         stops_list = []
         for s in route.stop_ids.sorted('sequence'):
             stops_list.append({
@@ -39,6 +50,7 @@ class RouteEditorController(http.Controller):
                 'lat': s.latitude,
                 'lon': s.longitude,
                 'radius': s.proximity_radius or 50.0,
+                'direction': getattr(s, 'stop_direction', 'outbound'),
                 'mandatory': s.is_mandatory,
             })
 
@@ -47,7 +59,7 @@ class RouteEditorController(http.Controller):
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diseñador de Ruta: {route.name}</title>
+    <title>Diseñador de Ruta Bidireccional: {route.name}</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
@@ -55,130 +67,166 @@ class RouteEditorController(http.Controller):
         body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; height: 100vh; display: flex; flex-direction: column; background: #0f172a; color: #f8fafc; overflow: hidden; }}
         #toolbar {{
             background: #1e293b;
-            padding: 10px 16px;
+            padding: 8px 14px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 8px;
             border-bottom: 1px solid #334155;
             z-index: 1000;
         }}
-        .tool-group {{ display: flex; align-items: center; gap: 8px; }}
+        .tool-group {{ display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }}
         .btn {{
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 8px 14px;
-            font-size: 13px;
+            padding: 7px 12px;
+            font-size: 12px;
             font-weight: 600;
             border-radius: 8px;
             border: 1px solid transparent;
             cursor: pointer;
             transition: all 0.2s ease;
+            user-select: none;
         }}
-        .btn-primary {{ background: #2563eb; color: white; }}
-        .btn-primary:hover {{ background: #1d4ed8; }}
+        .btn-outbound {{ background: #1e3a8a; color: #93c5fd; border-color: #3b82f6; }}
+        .btn-outbound:hover {{ background: #1d4ed8; color: white; }}
+        .btn-outbound.active {{ background: #2563eb !important; color: white !important; border-color: #60a5fa !important; box-shadow: 0 0 10px rgba(37,99,235,0.7); }}
+
+        .btn-return {{ background: #7c2d12; color: #fdba74; border-color: #f97316; }}
+        .btn-return:hover {{ background: #c2410c; color: white; }}
+        .btn-return.active {{ background: #ea580c !important; color: white !important; border-color: #fb923c !important; box-shadow: 0 0 10px rgba(234,88,12,0.7); }}
+
         .btn-success {{ background: #059669; color: white; }}
         .btn-success:hover {{ background: #047857; }}
         .btn-outline {{ background: #334155; color: #e2e8f0; border-color: #475569; }}
         .btn-outline:hover {{ background: #475569; }}
         .btn-danger {{ background: #dc2626; color: white; }}
         .btn-danger:hover {{ background: #b91c1c; }}
-        .btn-active {{ background: #3b82f6 !important; border-color: #60a5fa !important; box-shadow: 0 0 10px rgba(59,130,246,0.6); }}
-        .badge {{ padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; background: #334155; color: #94a3b8; }}
-        .badge-info {{ background: #0284c7; color: white; }}
-        .badge-success {{ background: #10b981; color: white; }}
-        .switch-container {{ display: flex; align-items: center; gap: 6px; font-size: 12px; color: #cbd5e1; user-select: none; cursor: pointer; }}
+
+        .badge {{ padding: 3px 7px; border-radius: 6px; font-size: 11px; font-weight: bold; background: #334155; color: #cbd5e1; }}
+        .badge-blue {{ background: #1d4ed8; color: white; }}
+        .badge-orange {{ background: #c2410c; color: white; }}
+        .switch-container {{ display: flex; align-items: center; gap: 5px; font-size: 11px; color: #cbd5e1; cursor: pointer; user-select: none; }}
+
+        #subbar {{
+            background: #0f172a;
+            padding: 5px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #94a3b8;
+            border-bottom: 1px solid #1e293b;
+            gap: 15px;
+            flex-wrap: wrap;
+        }}
+        .route-summary-box {{ display: flex; align-items: center; gap: 8px; }}
+
         #map {{ flex: 1; width: 100%; }}
         .toast-msg {{
             position: fixed;
-            top: 65px;
+            top: 75px;
             right: 20px;
             z-index: 2000;
-            padding: 12px 18px;
+            padding: 10px 16px;
             border-radius: 8px;
             color: white;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: bold;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
             display: none;
             animation: slideIn 0.3s ease;
         }}
         .toast-success {{ background: #059669; }}
         .toast-error {{ background: #dc2626; }}
         @keyframes slideIn {{ from {{ transform: translateX(100%); opacity: 0; }} to {{ transform: translateX(0); opacity: 1; }} }}
+
         .stop-marker-icon {{
             background: #10b981;
             color: white;
             font-weight: bold;
-            font-size: 11px;
+            font-size: 10px;
             border-radius: 50%;
             border: 2px solid white;
             display: flex;
             align-items: center;
             justify-content: center;
             box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-            width: 24px;
-            height: 24px;
+            width: 22px;
+            height: 22px;
         }}
         .endpoint-icon {{
-            width: 28px;
-            height: 28px;
+            width: 26px;
+            height: 26px;
             border-radius: 50%;
-            border: 3px solid white;
+            border: 2px solid white;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-weight: bold;
-            font-size: 12px;
+            font-size: 11px;
             box-shadow: 0 3px 8px rgba(0,0,0,0.4);
         }}
-        .start-point {{ background: #16a34a; }}
-        .end-point {{ background: #dc2626; }}
-        .waypoint-dot {{
-            background: #2563eb;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            border: 1px solid white;
-        }}
+        .out-start {{ background: #16a34a; }}
+        .out-end {{ background: #2563eb; }}
+        .ret-start {{ background: #ea580c; }}
+        .ret-end {{ background: #9333ea; }}
     </style>
 </head>
 <body>
     <div id="toolbar">
         <div class="tool-group">
-            <span class="badge badge-info"><i class="fa fa-route me-1"></i>{route.code}</span>
+            <span class="badge badge-blue"><i class="fa fa-route me-1"></i>{route.code}</span>
             <span style="font-weight: bold; font-size: 13px;">{route.name}</span>
-            <span class="badge"><i class="fa fa-shield me-1"></i>Desvío máx: {route.allowed_deviation_meters or 150}m</span>
         </div>
 
         <div class="tool-group">
-            <button id="btnTrace" class="btn btn-outline btn-active" title="Haz clic en el mapa para ir marcando el trazado de la ruta">
-                <i class="fa fa-pencil"></i> Trazar Ruta (Clic)
+            <!-- Selector de Sentido de Trazado -->
+            <button id="btnTrackOutbound" class="btn btn-outbound active" title="Editar el trazado del tramo de Ida (Salida)">
+                <i class="fa fa-arrow-right"></i> Trazar IDA (Azul)
             </button>
-            <label class="switch-container">
+            <button id="btnTrackReturn" class="btn btn-return" title="Editar el trazado del tramo de Regreso (Retorno)">
+                <i class="fa fa-arrow-left"></i> Trazar REGRESO (Naranja)
+            </button>
+
+            <label class="switch-container ms-2">
                 <input type="checkbox" id="chkAutoRoute" checked style="cursor: pointer;">
-                <span><i class="fa fa-road"></i> Seguir Calles (Auto)</span>
+                <span><i class="fa fa-road"></i> Seguir Calles</span>
             </label>
-            <button id="btnAddStop" class="btn btn-outline" title="Haz clic en el mapa para registrar una parada oficial">
+            <button id="btnAddStop" class="btn btn-outline" title="Haz clic en el mapa para registrar una parada">
                 <i class="fa fa-flag"></i> Nueva Parada
             </button>
-            <button id="btnUndo" class="btn btn-outline" title="Deshacer el último punto marcado">
+            <button id="btnUndo" class="btn btn-outline" title="Deshacer el último punto del trazado activo">
                 <i class="fa fa-undo"></i> Deshacer
             </button>
-            <button id="btnClear" class="btn btn-danger" title="Limpiar todo el trazado actual">
+            <button id="btnClear" class="btn btn-danger" title="Borrar el trazado del sentido activo">
                 <i class="fa fa-trash"></i> Limpiar
             </button>
-            <button id="btnSave" class="btn btn-success" title="Guardar este trazado en la base de datos de Odoo">
-                <i class="fa fa-save"></i> Guardar Trazado
+            <button id="btnSave" class="btn btn-success" title="Guardar ambos trazados, distancias y puntos de origen/destino en Odoo">
+                <i class="fa fa-save"></i> Guardar Rutas
             </button>
         </div>
+    </div>
 
-        <div class="tool-group">
-            <span class="badge badge-success"><i class="fa fa-map-pin me-1"></i><span id="txtPoints">0</span> Vértices</span>
-            <span class="badge badge-info"><i class="fa fa-tachometer-alt me-1"></i><span id="txtDist">0.00</span> km</span>
+    <!-- Barra de Origen / Destino / Distancias de ambos sentidos -->
+    <div id="subbar">
+        <div class="route-summary-box">
+            <span class="badge badge-blue">🔵 IDA:</span>
+            <span>Origen: <strong id="lblOriginOut" class="text-white">--</strong></span>
+            <span>➔</span>
+            <span>Destino: <strong id="lblDestOut" class="text-white">--</strong></span>
+            <span class="badge"><span id="txtDistOut">0.00</span> km (<span id="txtPtsOut">0</span> pts)</span>
+        </div>
+
+        <div class="route-summary-box">
+            <span class="badge badge-orange">🟠 REGRESO:</span>
+            <span>Origen: <strong id="lblOriginRet" class="text-white">--</strong></span>
+            <span>➔</span>
+            <span>Destino: <strong id="lblDestRet" class="text-white">--</strong></span>
+            <span class="badge"><span id="txtDistRet">0.00</span> km (<span id="txtPtsRet">0</span> pts)</span>
         </div>
     </div>
 
@@ -188,15 +236,25 @@ class RouteEditorController(http.Controller):
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         const routeId = {route.id};
-        let points = {json.dumps(existing_coords)};
+        let pointsOutbound = {json.dumps(existing_outbound)};
+        let pointsReturn = {json.dumps(existing_return)};
         const stops = {json.dumps(stops_list)};
 
-        let currentMode = 'trace'; // 'trace' or 'stop'
-        let polyline = null;
-        let pointMarkers = [];
+        let activeTrack = 'outbound'; // 'outbound' or 'return'
+        let mode = 'trace'; // 'trace' or 'stop'
+
+        let polylineOut = null;
+        let polylineRet = null;
+        let markersOut = [];
+        let markersRet = [];
         let stopMarkers = [];
 
-        // Inicializar mapa (Centrado en Ambato por defecto)
+        let originNameOut = "{route.origin or ''}";
+        let destNameOut = "{route.destination or ''}";
+        let originNameRet = "{getattr(route, 'origin_return', '') or ''}";
+        let destNameRet = "{getattr(route, 'destination_return', '') or ''}";
+
+        // Inicializar Mapa centrado en Ambato
         const map = L.map('map', {{
             center: [-1.2543, -78.6229],
             zoom: 14,
@@ -216,18 +274,18 @@ class RouteEditorController(http.Controller):
             setTimeout(() => {{ t.style.display = 'none'; }}, 3500);
         }}
 
-        // Fórmula Haversine para distancia acumulada
+        // Haversine
         function haversine(lat1, lon1, lat2, lon2) {{
             const R = 6371; // km
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat/2)*Math.sin(dLat/2) + 
-                      Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * 
+            const a = Math.sin(dLat/2)*Math.sin(dLat/2) +
+                      Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) *
                       Math.sin(dLon/2)*Math.sin(dLon/2);
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }}
 
-        function calculateTotalDistance(pts) {{
+        function calcDistance(pts) {{
             if (pts.length < 2) return 0.0;
             let total = 0.0;
             for (let i = 0; i < pts.length - 1; i++) {{
@@ -236,25 +294,75 @@ class RouteEditorController(http.Controller):
             return total;
         }}
 
-        function updateStats() {{
-            document.getElementById('txtPoints').innerText = points.length;
-            const dist = calculateTotalDistance(points);
-            document.getElementById('txtDist').innerText = dist.toFixed(2);
+        // Geocodificación inversa para obtener nombres de calles del 1er y último vértice
+        async function reverseGeocode(lat, lon) {{
+            try {{
+                const res = await fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lon);
+                const data = await res.json();
+                if (data && data.address) {{
+                    const road = data.address.road || data.address.neighbourhood || data.address.suburb || data.address.city || '';
+                    if (road) return road;
+                }}
+            }} catch (e) {{
+                // Red local / offline
+            }}
+            return 'Punto (' + lat.toFixed(4) + ', ' + lon.toFixed(4) + ')';
         }}
 
-        function redrawRoute() {{
-            // Limpiar marcadores de trazado previos
-            pointMarkers.forEach(m => map.removeLayer(m));
-            pointMarkers = [];
-            if (polyline) map.removeLayer(polyline);
-
-            if (points.length === 0) {{
-                updateStats();
-                return;
+        async function updateVertexLocations() {{
+            // Actualizar Origen y Destino de Ida
+            if (pointsOutbound.length > 0) {{
+                const p0 = pointsOutbound[0];
+                const pLast = pointsOutbound[pointsOutbound.length - 1];
+                if (!originNameOut || originNameOut.includes('Tomado') || originNameOut.includes('Determinado')) {{
+                    originNameOut = await reverseGeocode(p0[0], p0[1]);
+                }}
+                if (pointsOutbound.length > 1) {{
+                    destNameOut = await reverseGeocode(pLast[0], pLast[1]);
+                }} else {{
+                    destNameOut = originNameOut;
+                }}
             }}
+            // Actualizar Origen y Destino de Regreso
+            if (pointsReturn.length > 0) {{
+                const p0 = pointsReturn[0];
+                const pLast = pointsReturn[pointsReturn.length - 1];
+                if (!originNameRet || originNameRet.includes('Tomado') || originNameRet.includes('Determinado')) {{
+                    originNameRet = await reverseGeocode(p0[0], p0[1]);
+                }}
+                if (pointsReturn.length > 1) {{
+                    destNameRet = await reverseGeocode(pLast[0], pLast[1]);
+                }} else {{
+                    destNameRet = originNameRet;
+                }}
+            }}
+            renderSubbar();
+        }}
 
-            // Dibujar polilínea continua
-            polyline = L.polyline(points, {{
+        function renderSubbar() {{
+            const distOut = calcDistance(pointsOutbound);
+            const distRet = calcDistance(pointsReturn);
+
+            document.getElementById('txtPtsOut').innerText = pointsOutbound.length;
+            document.getElementById('txtDistOut').innerText = distOut.toFixed(2);
+            document.getElementById('lblOriginOut').innerText = originNameOut || (pointsOutbound.length > 0 ? (pointsOutbound[0][0].toFixed(4) + ', ' + pointsOutbound[0][1].toFixed(4)) : '--');
+            document.getElementById('lblDestOut').innerText = destNameOut || (pointsOutbound.length > 1 ? (pointsOutbound[pointsOutbound.length-1][0].toFixed(4) + ', ' + pointsOutbound[pointsOutbound.length-1][1].toFixed(4)) : '--');
+
+            document.getElementById('txtPtsRet').innerText = pointsReturn.length;
+            document.getElementById('txtDistRet').innerText = distRet.toFixed(2);
+            document.getElementById('lblOriginRet').innerText = originNameRet || (pointsReturn.length > 0 ? (pointsReturn[0][0].toFixed(4) + ', ' + pointsReturn[0][1].toFixed(4)) : '--');
+            document.getElementById('lblDestRet').innerText = destNameRet || (pointsReturn.length > 1 ? (pointsReturn[pointsReturn.length-1][0].toFixed(4) + ', ' + pointsReturn[pointsReturn.length-1][1].toFixed(4)) : '--');
+        }}
+
+        // Dibujar Trazado de Ida (Azul)
+        function redrawOutbound() {{
+            markersOut.forEach(m => map.removeLayer(m));
+            markersOut = [];
+            if (polylineOut) map.removeLayer(polylineOut);
+
+            if (pointsOutbound.length === 0) return;
+
+            polylineOut = L.polyline(pointsOutbound, {{
                 color: '#2563eb',
                 weight: 5,
                 opacity: 0.85,
@@ -262,126 +370,153 @@ class RouteEditorController(http.Controller):
                 lineJoin: 'round'
             }}).addTo(map);
 
-            // Marcador de Inicio (Verde)
-            const startIcon = L.divIcon({{
-                className: 'endpoint-icon start-point',
-                html: '<i class="fa fa-play" style="font-size: 10px;"></i>',
-                iconSize: [28, 28],
-                iconAnchor: [14, 14]
+            // Marcador Inicio Ida (Verde)
+            const iconStart = L.divIcon({{
+                className: 'endpoint-icon out-start',
+                html: '<i class="fa fa-play" style="font-size: 9px;"></i>',
+                iconSize: [26, 26],
+                iconAnchor: [13, 13]
             }});
-            const startMarker = L.marker(points[0], {{ icon: startIcon }})
-                .bindPopup('<b>Inicio de Ruta</b><br>' + points[0][0].toFixed(5) + ', ' + points[0][1].toFixed(5))
+            const mStart = L.marker(pointsOutbound[0], {{ icon: iconStart }})
+                .bindPopup('<b>🔵 Origen Ida:</b><br>' + originNameOut)
                 .addTo(map);
-            pointMarkers.push(startMarker);
+            markersOut.push(mStart);
 
-            // Marcador de Fin (Rojo) si hay más de 1 punto
-            if (points.length > 1) {{
-                const endIcon = L.divIcon({{
-                    className: 'endpoint-icon end-point',
-                    html: '<i class="fa fa-flag-checkered" style="font-size: 11px;"></i>',
-                    iconSize: [28, 28],
-                    iconAnchor: [14, 14]
+            // Marcador Fin Ida (Azul oscuro / Bandera)
+            if (pointsOutbound.length > 1) {{
+                const iconEnd = L.divIcon({{
+                    className: 'endpoint-icon out-end',
+                    html: '<i class="fa fa-flag-checkered" style="font-size: 10px;"></i>',
+                    iconSize: [26, 26],
+                    iconAnchor: [13, 13]
                 }});
-                const endMarker = L.marker(points[points.length - 1], {{ icon: endIcon }})
-                    .bindPopup('<b>Destino / Final de Ruta</b><br>' + points[points.length - 1][0].toFixed(5) + ', ' + points[points.length - 1][1].toFixed(5))
+                const mEnd = L.marker(pointsOutbound[pointsOutbound.length - 1], {{ icon: iconEnd }})
+                    .bindPopup('<b>🔵 Destino Ida:</b><br>' + destNameOut)
                     .addTo(map);
-                pointMarkers.push(endMarker);
+                markersOut.push(mEnd);
             }}
-
-            updateStats();
         }}
 
-        // Renderizar paradas registradas
+        // Dibujar Trazado de Regreso (Naranja)
+        function redrawReturn() {{
+            markersRet.forEach(m => map.removeLayer(m));
+            markersRet = [];
+            if (polylineRet) map.removeLayer(polylineRet);
+
+            if (pointsReturn.length === 0) return;
+
+            polylineRet = L.polyline(pointsReturn, {{
+                color: '#ea580c',
+                weight: 5,
+                opacity: 0.85,
+                dashArray: '8, 6', // Distintivo para visualizar fácilmente superposiciones
+                lineCap: 'round',
+                lineJoin: 'round'
+            }}).addTo(map);
+
+            // Marcador Inicio Regreso (Naranja)
+            const iconStart = L.divIcon({{
+                className: 'endpoint-icon ret-start',
+                html: '<i class="fa fa-play" style="font-size: 9px;"></i>',
+                iconSize: [26, 26],
+                iconAnchor: [13, 13]
+            }});
+            const mStart = L.marker(pointsReturn[0], {{ icon: iconStart }})
+                .bindPopup('<b>🟠 Origen Regreso:</b><br>' + originNameRet)
+                .addTo(map);
+            markersRet.push(mStart);
+
+            // Marcador Fin Regreso (Morado / Bandera)
+            if (pointsReturn.length > 1) {{
+                const iconEnd = L.divIcon({{
+                    className: 'endpoint-icon ret-end',
+                    html: '<i class="fa fa-flag-checkered" style="font-size: 10px;"></i>',
+                    iconSize: [26, 26],
+                    iconAnchor: [13, 13]
+                }});
+                const mEnd = L.marker(pointsReturn[pointsReturn.length - 1], {{ icon: iconEnd }})
+                    .bindPopup('<b>🟠 Destino Regreso:</b><br>' + destNameRet)
+                    .addTo(map);
+                markersRet.push(mEnd);
+            }}
+        }}
+
+        // Renderizar Paradas
         function renderStops() {{
             stopMarkers.forEach(m => map.removeLayer(m));
             stopMarkers = [];
-
             stops.forEach(s => {{
                 const icon = L.divIcon({{
                     className: 'stop-marker-icon',
                     html: '<span>' + (s.seq ? s.seq/10 : 'P') + '</span>',
-                    iconSize: [24, 24],
-                    iconAnchor: [12, 12]
+                    iconSize: [22, 22],
+                    iconAnchor: [11, 11]
                 }});
                 const m = L.marker([s.lat, s.lon], {{ icon: icon }})
-                    .bindPopup('<b>Parada Oficial #' + (s.seq/10) + ':</b> ' + s.name + '<br>Radio de Proximidad: ' + s.radius + 'm')
+                    .bindPopup('<b>Parada #' + (s.seq/10) + ':</b> ' + s.name + '<br>Radio: ' + s.radius + 'm')
                     .addTo(map);
                 stopMarkers.push(m);
             }});
         }}
 
-        // Inicializar trazado existente y ajustar zoom
-        redrawRoute();
+        // Inicializar vistas
+        redrawOutbound();
+        redrawReturn();
         renderStops();
+        renderSubbar();
 
-        if (points.length > 0) {{
-            map.fitBounds(polyline.getBounds(), {{ padding: [40, 40] }});
-        }} else if (stops.length > 0) {{
-            const group = new L.featureGroup(stopMarkers);
-            map.fitBounds(group.getBounds(), {{ padding: [40, 40] }});
+        // Ajustar zoom inicial
+        const allBounds = [];
+        if (polylineOut) allBounds.push(polylineOut.getBounds());
+        if (polylineRet) allBounds.push(polylineRet.getBounds());
+        if (allBounds.length > 0) {{
+            const combined = allBounds[0];
+            if (allBounds.length > 1) combined.extend(allBounds[1]);
+            map.fitBounds(combined, {{ padding: [40, 40] }});
         }}
 
-        // Alternar modos de la barra de herramientas
-        const btnTrace = document.getElementById('btnTrace');
+        // Botones de Selector de Sentido
+        const btnTrackOut = document.getElementById('btnTrackOutbound');
+        const btnTrackRet = document.getElementById('btnTrackReturn');
         const btnAddStop = document.getElementById('btnAddStop');
 
-        btnTrace.addEventListener('click', () => {{
-            currentMode = 'trace';
-            btnTrace.className = 'btn btn-outline btn-active';
+        btnTrackOut.addEventListener('click', () => {{
+            activeTrack = 'outbound';
+            mode = 'trace';
+            btnTrackOut.className = 'btn btn-outbound active';
+            btnTrackRet.className = 'btn btn-return';
             btnAddStop.className = 'btn btn-outline';
             map.getContainer().style.cursor = 'crosshair';
-            showToast('Modo Trazado Activo: Haz clic en el mapa para marcar la línea del bus');
+            showToast('Modo Activo: 🔵 Trazado de IDA (Línea Azul)');
+        }});
+
+        btnTrackRet.addEventListener('click', () => {{
+            activeTrack = 'return';
+            mode = 'trace';
+            btnTrackRet.className = 'btn btn-return active';
+            btnTrackOut.className = 'btn btn-outbound';
+            btnAddStop.className = 'btn btn-outline';
+            map.getContainer().style.cursor = 'crosshair';
+            showToast('Modo Activo: 🟠 Trazado de REGRESO (Línea Naranja)');
         }});
 
         btnAddStop.addEventListener('click', () => {{
-            currentMode = 'stop';
-            btnAddStop.className = 'btn btn-outline btn-active';
-            btnTrace.className = 'btn btn-outline';
+            mode = 'stop';
+            btnAddStop.className = 'btn btn-outline active';
             map.getContainer().style.cursor = 'pointer';
-            showToast('Modo Parada: Haz clic en el mapa para registrar una parada oficial');
+            showToast('Modo Parada: Haz clic en el mapa para registrar una parada');
         }});
 
-        // Clic en el mapa para añadir punto o parada
+        // Clic en el Mapa
         map.on('click', async (e) => {{
             const lat = e.latlng.lat;
             const lon = e.latlng.lng;
 
-            if (currentMode === 'trace') {{
-                const autoRoute = document.getElementById('chkAutoRoute').checked;
-
-                // Si autoRoute está activo y ya hay un punto previo, intentar seguir las calles con OSRM
-                if (autoRoute && points.length > 0) {{
-                    const last = points[points.length - 1];
-                    showToast('Enrutando por calles con OpenStreetMap...');
-                    try {{
-                        const url = 'https://router.project-osrm.org/route/v1/driving/' + 
-                                    last[1] + ',' + last[0] + ';' + lon + ',' + lat + 
-                                    '?overview=full&geometries=geojson';
-                        const res = await fetch(url);
-                        const data = await res.json();
-                        if (data.routes && data.routes.length > 0) {{
-                            const coords = data.routes[0].geometry.coordinates; // [lon, lat]
-                            // Añadir los puntos intermedios omitiendo el primero repetido
-                            for (let i = 1; i < coords.length; i++) {{
-                                points.push([coords[i][1], coords[i][0]]);
-                            }}
-                            redrawRoute();
-                            return;
-                        }}
-                    }} catch (err) {{
-                        console.warn('OSRM error, fallback a línea recta:', err);
-                    }}
-                }}
-
-                // Línea directa o primer punto
-                points.push([lat, lon]);
-                redrawRoute();
-
-            }} else if (currentMode === 'stop') {{
-                const stopName = prompt('Nombre de la nueva Parada:', 'Parada #' + (stops.length + 1));
+            if (mode === 'stop') {{
+                const stopName = prompt('Nombre de la Parada:', 'Parada #' + (stops.length + 1));
                 if (!stopName) return;
 
-                showToast('Guardando nueva parada...');
+                showToast('Guardando parada...');
                 try {{
                     const res = await fetch('/transport/route/add_stop', {{
                         method: 'POST',
@@ -390,7 +525,8 @@ class RouteEditorController(http.Controller):
                             route_id: routeId,
                             name: stopName,
                             lat: lat,
-                            lon: lon
+                            lon: lon,
+                            direction: activeTrack
                         }})
                     }});
                     const data = await res.json();
@@ -404,61 +540,114 @@ class RouteEditorController(http.Controller):
                             radius: 50.0
                         }});
                         renderStops();
-                        showToast('✅ Parada ' + data.name + ' registrada correctamente');
+                        showToast('✅ Parada ' + data.name + ' guardada');
                     }} else {{
                         showToast('Error: ' + data.message, true);
                     }}
                 }} catch (err) {{
                     showToast('Error de conexión al crear parada', true);
                 }}
+                mode = 'trace';
+                btnAddStop.className = 'btn btn-outline';
+                return;
             }}
+
+            // Modo Trazado (Ida o Regreso)
+            const targetArray = (activeTrack === 'outbound') ? pointsOutbound : pointsReturn;
+            const autoRoute = document.getElementById('chkAutoRoute').checked;
+
+            if (autoRoute && targetArray.length > 0) {{
+                const last = targetArray[targetArray.length - 1];
+                showToast('Enrutando por calles con OpenStreetMap...');
+                try {{
+                    const url = 'https://router.project-osrm.org/route/v1/driving/' +
+                                last[1] + ',' + last[0] + ';' + lon + ',' + lat +
+                                '?overview=full&geometries=geojson';
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    if (data.routes && data.routes.length > 0) {{
+                        const coords = data.routes[0].geometry.coordinates; // [lon, lat]
+                        for (let i = 1; i < coords.length; i++) {{
+                            targetArray.push([coords[i][1], coords[i][0]]);
+                        }}
+                        if (activeTrack === 'outbound') redrawOutbound();
+                        else redrawReturn();
+                        updateVertexLocations();
+                        return;
+                    }}
+                }} catch (err) {{
+                    console.warn('OSRM error, usando línea recta:', err);
+                }}
+            }}
+
+            targetArray.push([lat, lon]);
+            if (activeTrack === 'outbound') redrawOutbound();
+            else redrawReturn();
+            updateVertexLocations();
         }});
 
         // Botón Deshacer
         document.getElementById('btnUndo').addEventListener('click', () => {{
-            if (points.length === 0) return;
-            points.pop();
-            redrawRoute();
-            showToast('Último punto eliminado');
+            const targetArray = (activeTrack === 'outbound') ? pointsOutbound : pointsReturn;
+            if (targetArray.length === 0) return;
+            targetArray.pop();
+            if (activeTrack === 'outbound') redrawOutbound();
+            else redrawReturn();
+            updateVertexLocations();
+            showToast('Último vértice eliminado de ' + (activeTrack === 'outbound' ? 'Ida' : 'Regreso'));
         }});
 
         // Botón Limpiar
         document.getElementById('btnClear').addEventListener('click', () => {{
-            if (confirm('¿Deseas borrar todo el trazado actual para empezar de nuevo?')) {{
-                points = [];
-                redrawRoute();
-                showToast('Trazado reiniciado');
+            const name = (activeTrack === 'outbound') ? 'IDA' : 'REGRESO';
+            if (confirm('¿Deseas reiniciar el trazado de ' + name + '?')) {{
+                if (activeTrack === 'outbound') {{
+                    pointsOutbound = [];
+                    redrawOutbound();
+                }} else {{
+                    pointsReturn = [];
+                    redrawReturn();
+                }}
+                updateVertexLocations();
+                showToast('Trazado de ' + name + ' reiniciado');
             }}
         }});
 
-        // Botón Guardar Trazado en Odoo
+        // Botón Guardar Trazados (Ida y Regreso)
         document.getElementById('btnSave').addEventListener('click', async () => {{
-            if (points.length === 0) {{
-                alert('No has marcado ningún punto aún. Haz clic sobre el mapa para trazar la ruta antes de guardar.');
+            if (pointsOutbound.length === 0 && pointsReturn.length === 0) {{
+                alert('No has trazado ningún punto todavía. Haz clic sobre el mapa para trazar la ruta de ida o regreso.');
                 return;
             }}
 
-            const dist = calculateTotalDistance(points);
-            showToast('Guardando trazado oficial en Odoo...');
+            const distOut = calcDistance(pointsOutbound);
+            const distRet = calcDistance(pointsReturn);
 
+            showToast('Guardando ambos trazados en Odoo...');
             try {{
                 const res = await fetch('/transport/route/save_coordinates', {{
                     method: 'POST',
                     headers: {{ 'Content-Type': 'application/json' }},
                     body: JSON.stringify({{
                         route_id: routeId,
-                        coordinates: points,
-                        distance_km: dist
+                        outbound_coordinates: pointsOutbound,
+                        return_coordinates: pointsReturn,
+                        outbound_distance: distOut,
+                        return_distance: distRet,
+                        origin_out: originNameOut,
+                        dest_out: destNameOut,
+                        origin_ret: originNameRet,
+                        dest_ret: destNameRet
                     }})
                 }});
                 const data = await res.json();
                 if (data.status === 'ok') {{
-                    showToast('✅ ¡Trazado oficial guardado! (' + data.points_count + ' puntos, ' + data.distance_km + ' km). Detección de desvíos activa.');
+                    showToast('✅ ¡Rutas guardadas con éxito! Ida: ' + data.outbound_km + ' km | Regreso: ' + data.return_km + ' km');
                 }} else {{
-                    showToast('Error al guardar: ' + data.message, true);
+                    showToast('Error: ' + data.message, true);
                 }}
             }} catch (err) {{
-                showToast('Error al conectar con Odoo para guardar trazado', true);
+                showToast('Error de conexión al guardar trazados', true);
             }}
         }});
     </script>
@@ -469,8 +658,9 @@ class RouteEditorController(http.Controller):
     @http.route('/transport/route/save_coordinates', type='http', auth='user', methods=['POST'], csrf=False)
     def save_coordinates(self, **kwargs):
         """
-        Guarda las coordenadas del trazado oficial y la distancia calculada
-        en el modelo transport.route.
+        Guarda las coordenadas de Ida y de Regreso, actualiza distancias y
+        asigna automáticamente el Punto de Origen (1er vértice) y
+        Punto de Destino (último vértice) de cada sentido.
         """
         try:
             raw_data = request.httprequest.data
@@ -480,8 +670,15 @@ class RouteEditorController(http.Controller):
                 data = kwargs
 
             route_id = data.get('route_id')
-            coordinates = data.get('coordinates', [])
-            distance_km = data.get('distance_km', 0.0)
+            outbound_coords = data.get('outbound_coordinates', data.get('coordinates', []))
+            return_coords = data.get('return_coordinates', [])
+            outbound_dist = data.get('outbound_distance', data.get('distance_km', 0.0))
+            return_dist = data.get('return_distance', 0.0)
+
+            origin_out = data.get('origin_out', '').strip()
+            dest_out = data.get('dest_out', '').strip()
+            origin_ret = data.get('origin_ret', '').strip()
+            dest_ret = data.get('dest_ret', '').strip()
 
             if not route_id:
                 return request.make_response(
@@ -499,23 +696,42 @@ class RouteEditorController(http.Controller):
                 )
 
             vals = {
-                'reference_coordinates': json.dumps(coordinates),
+                'reference_coordinates': json.dumps(outbound_coords),
+                'return_coordinates': json.dumps(return_coords),
+                'outbound_distance': round(float(outbound_dist), 2) if outbound_dist else 0.0,
+                'return_distance': round(float(return_dist), 2) if return_dist else 0.0,
             }
-            if distance_km:
-                vals['estimated_distance'] = round(float(distance_km), 2)
+
+            # Asignación automática de Origen y Destino de Ida desde los vértices
+            if outbound_coords and len(outbound_coords) > 0:
+                p0 = outbound_coords[0]
+                pLast = outbound_coords[-1]
+                vals['origin'] = origin_out or f"Lat: {p0[0]:.5f}, Lon: {p0[1]:.5f}"
+                vals['destination'] = dest_out or f"Lat: {pLast[0]:.5f}, Lon: {pLast[1]:.5f}"
+
+            # Asignación automática de Origen y Destino de Regreso desde los vértices
+            if return_coords and len(return_coords) > 0:
+                p0_ret = return_coords[0]
+                pLast_ret = return_coords[-1]
+                vals['origin_return'] = origin_ret or f"Lat: {p0_ret[0]:.5f}, Lon: {p0_ret[1]:.5f}"
+                vals['destination_return'] = dest_ret or f"Lat: {pLast_ret[0]:.5f}, Lon: {pLast_ret[1]:.5f}"
 
             route.write(vals)
 
             return request.make_response(
                 json.dumps({
                     'status': 'ok',
-                    'points_count': len(coordinates),
-                    'distance_km': vals.get('estimated_distance', route.estimated_distance)
+                    'outbound_pts': len(outbound_coords),
+                    'return_pts': len(return_coords),
+                    'outbound_km': vals.get('outbound_distance', 0.0),
+                    'return_km': vals.get('return_distance', 0.0),
+                    'origin': route.origin,
+                    'destination': route.destination
                 }),
                 headers=[('Content-Type', 'application/json')]
             )
         except Exception as e:
-            _logger.exception("Error guardando trazado de ruta: %s", e)
+            _logger.exception("Error guardando trazados bidireccionales: %s", e)
             return request.make_response(
                 json.dumps({'status': 'error', 'message': str(e)}),
                 headers=[('Content-Type', 'application/json')],
@@ -525,7 +741,7 @@ class RouteEditorController(http.Controller):
     @http.route('/transport/route/add_stop', type='http', auth='user', methods=['POST'], csrf=False)
     def add_stop(self, **kwargs):
         """
-        Crea un nuevo punto de parada para la ruta directamente desde el mapa.
+        Crea un nuevo punto de parada georreferenciado para la ruta.
         """
         try:
             raw_data = request.httprequest.data
@@ -538,6 +754,7 @@ class RouteEditorController(http.Controller):
             name = (data.get('name') or 'Nueva Parada').strip()
             lat = data.get('lat')
             lon = data.get('lon')
+            direction = data.get('direction', 'outbound')
 
             if not route_id or lat is None or lon is None:
                 return request.make_response(
@@ -557,7 +774,7 @@ class RouteEditorController(http.Controller):
             existing_seqs = [s.sequence for s in route.stop_ids]
             next_seq = (max(existing_seqs) + 10) if existing_seqs else 10
 
-            stop = request.env['transport.route.stop'].create({
+            stop_vals = {
                 'route_id': route.id,
                 'name': name,
                 'sequence': next_seq,
@@ -565,7 +782,11 @@ class RouteEditorController(http.Controller):
                 'longitude': float(lon),
                 'proximity_radius': 50.0,
                 'is_mandatory': True,
-            })
+            }
+            if hasattr(request.env['transport.route.stop'], 'stop_direction'):
+                stop_vals['stop_direction'] = direction
+
+            stop = request.env['transport.route.stop'].create(stop_vals)
 
             return request.make_response(
                 json.dumps({
@@ -585,4 +806,3 @@ class RouteEditorController(http.Controller):
                 headers=[('Content-Type', 'application/json')],
                 status=500
             )
-

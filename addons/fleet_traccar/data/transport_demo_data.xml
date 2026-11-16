@@ -7,11 +7,17 @@
             <field name="code">UTA-R01</field>
             <field name="origin">Campus Huachi (Av. Los Chasquis)</field>
             <field name="destination">Campus Ingahurco (Av. Colombia)</field>
-            <field name="estimated_distance">5.8</field>
+            <field name="origin_return">Campus Ingahurco (Av. Colombia)</field>
+            <field name="destination_return">Campus Huachi (Av. Los Chasquis)</field>
+            <field name="outbound_distance">5.8</field>
+            <field name="return_distance">6.1</field>
             <field name="estimated_duration">25.0</field>
+            <field name="return_duration">25.0</field>
+            <field name="layover_duration">15.0</field>
             <field name="allowed_deviation_meters">150.0</field>
-            <field name="description">Ruta troncal principal entre el campus sur Huachi y el campus norte Ingahurco atravesando el centro comercial y financiero de Ambato.</field>
+            <field name="description">Ruta troncal principal entre Campus Huachi e Ingahurco con trazados independientes de ida (Azul) y regreso (Naranja).</field>
             <field name="reference_coordinates">[[-1.2687,-78.6258],[-1.2605,-78.6242],[-1.2418,-78.6279],[-1.2425,-78.6185]]</field>
+            <field name="return_coordinates">[[-1.2425,-78.6185],[-1.2418,-78.6279],[-1.2605,-78.6242],[-1.2687,-78.6258]]</field>
         </record>
 
         <!-- Paradas Ruta 1 -->
@@ -69,11 +75,17 @@
             <field name="code">UTA-R02</field>
             <field name="origin">Campus Huachi (Estación Sur)</field>
             <field name="destination">Campus Querochaca (Cevallos - Agropecuarias)</field>
-            <field name="estimated_distance">11.5</field>
+            <field name="origin_return">Campus Querochaca (Cevallos - Agropecuarias)</field>
+            <field name="destination_return">Campus Huachi (Estación Sur)</field>
+            <field name="outbound_distance">11.5</field>
+            <field name="return_distance">11.8</field>
             <field name="estimated_duration">35.0</field>
+            <field name="return_duration">35.0</field>
+            <field name="layover_duration">15.0</field>
             <field name="allowed_deviation_meters">200.0</field>
-            <field name="description">Ruta hacia la Facultad de Ciencias Agropecuarias en Querochaca por el eje Panamericana Sur.</field>
+            <field name="description">Ruta hacia la Facultad de Ciencias Agropecuarias en Querochaca por el eje Panamericana Sur con trazados independientes de ida y regreso.</field>
             <field name="reference_coordinates">[[-1.2687,-78.6258],[-1.2785,-78.6310],[-1.2980,-78.6210],[-1.3328,-78.6015]]</field>
+            <field name="return_coordinates">[[-1.3328,-78.6015],[-1.2980,-78.6210],[-1.2785,-78.6310],[-1.2687,-78.6258]]</field>
         </record>
 
         <!-- Paradas Ruta 2 -->
@@ -125,17 +137,23 @@
             <field name="is_mandatory">1</field>
         </record>
 
-        <!-- RUTA 3: Circuito Ficoa - Huachi -->
+        <!-- RUTA 3: Campus Huachi - Ficoa -->
         <record id="route_ficoa_huachi" model="transport.route">
-            <field name="name">Ruta 3: Circuito Periférico Ficoa - Polideportivo - Huachi</field>
+            <field name="name">Ruta 3: Conexión Campus Huachi - Polideportivo - Ficoa</field>
             <field name="code">UTA-R03</field>
-            <field name="origin">Redondel de Miraflores</field>
-            <field name="destination">Campus Huachi</field>
-            <field name="estimated_distance">4.6</field>
+            <field name="origin">Campus Huachi</field>
+            <field name="destination">Redondel de Miraflores (Ficoa)</field>
+            <field name="origin_return">Redondel de Miraflores (Ficoa)</field>
+            <field name="destination_return">Campus Huachi</field>
+            <field name="outbound_distance">4.6</field>
+            <field name="return_distance">4.8</field>
             <field name="estimated_duration">20.0</field>
+            <field name="return_duration">20.0</field>
+            <field name="layover_duration">10.0</field>
             <field name="allowed_deviation_meters">150.0</field>
-            <field name="description">Recorrido perimetral universitario para estudiantes del sector oeste y deportivo.</field>
-            <field name="reference_coordinates">[[-1.2490,-78.6360],[-1.2580,-78.6320],[-1.2650,-78.6285],[-1.2687,-78.6258]]</field>
+            <field name="description">Recorrido universitario hacia el sector oeste y deportivo con trazados independientes de ida y regreso.</field>
+            <field name="reference_coordinates">[[-1.2687,-78.6258],[-1.2650,-78.6285],[-1.2580,-78.6320],[-1.2490,-78.6360]]</field>
+            <field name="return_coordinates">[[-1.2490,-78.6360],[-1.2580,-78.6320],[-1.2650,-78.6285],[-1.2687,-78.6258]]</field>
         </record>
 
         <!-- Paradas Ruta 3 -->

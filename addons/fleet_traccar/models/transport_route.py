@@ -18,26 +18,61 @@ class TransportRoute(models.Model):
         help="Identificador único (ej: UTA-R01)"
     )
     origin = fields.Char(
-        string='Punto de Origen',
-        required=True,
-        help="Lugar de partida (ej: Campus Huachi - Puerta Principal)"
+        string='Punto de Origen (Ida)',
+        default='Tomado automáticamente del 1er vértice de ida',
+        help="Lugar de partida de ida. Se toma automáticamente del primer vértice trazado en el mapa."
     )
     destination = fields.Char(
-        string='Punto de Destino',
-        required=True,
-        help="Lugar de llegada (ej: Campus Ingahurco - Edificio Central)"
+        string='Punto de Destino (Llegada Ida)',
+        default='Tomado automáticamente del último vértice de ida',
+        help="Lugar de llegada de ida. Se toma automáticamente del último vértice trazado en el mapa."
     )
-    estimated_distance = fields.Float(
-        string='Distancia Estimada (km)',
+    origin_return = fields.Char(
+        string='Origen del Retorno',
+        default='Tomado automáticamente del 1er vértice de retorno',
+        help="Lugar de partida del tramo de regreso."
+    )
+    destination_return = fields.Char(
+        string='Destino del Retorno',
+        default='Tomado automáticamente del último vértice de retorno',
+        help="Lugar de llegada final del tramo de regreso."
+    )
+    outbound_distance = fields.Float(
+        string='Distancia de Ida (km)',
         digits=(6, 2),
         default=0.0,
-        help="Distancia programada del recorrido completo en kilómetros"
+        help="Distancia calculada del tramo de ida en kilómetros."
+    )
+    return_distance = fields.Float(
+        string='Distancia de Retorno (km)',
+        digits=(6, 2),
+        default=0.0,
+        help="Distancia calculada del tramo de regreso en kilómetros."
+    )
+    estimated_distance = fields.Float(
+        string='Distancia Total Ida + Retorno (km)',
+        digits=(6, 2),
+        compute='_compute_total_distance',
+        store=True,
+        help="Distancia total acumulada de ida y regreso."
     )
     estimated_duration = fields.Float(
-        string='Duración Estimada (min)',
+        string='Duración Estimada Ida (min)',
         digits=(6, 1),
-        default=30.0,
-        help="Tiempo previsto de viaje en minutos"
+        default=25.0,
+        help="Tiempo previsto de viaje para el tramo de ida en minutos. NOTA: Este tiempo ya debe comprender el tiempo total estimado de las paradas intermedias."
+    )
+    return_duration = fields.Float(
+        string='Duración Estimada Retorno (min)',
+        digits=(6, 1),
+        default=25.0,
+        help="Tiempo previsto de viaje para el tramo de regreso en minutos. NOTA: Este tiempo ya debe comprender el tiempo total estimado de las paradas intermedias."
+    )
+    layover_duration = fields.Float(
+        string='Tiempo de Espera en Cabecera (min)',
+        default=15.0,
+        digits=(5, 1),
+        help="Tiempo estimado de espera o regulación en el punto final antes de iniciar el tramo de regreso (opcional)."
     )
     allowed_deviation_meters = fields.Float(
         string='Tolerancia de Desvío (metros)',
@@ -55,8 +90,12 @@ class TransportRoute(models.Model):
         string='Color'
     )
     reference_coordinates = fields.Text(
-        string='Coordenadas del Trazado Base',
-        help="Pares de coordenadas lat,lon de la ruta para comprobación de desvíos."
+        string='Coordenadas del Trazado de Ida',
+        help="Pares de coordenadas lat,lon del tramo de ida (Línea Azul)."
+    )
+    return_coordinates = fields.Text(
+        string='Coordenadas del Trazado de Regreso',
+        help="Pares de coordenadas lat,lon del tramo de regreso (Línea Naranja)."
     )
     route_map_html = fields.Html(
         string='Mapa Interactivo de la Ruta',
@@ -86,7 +125,12 @@ class TransportRoute(models.Model):
         ('code_unique', 'unique(code)', 'El código de ruta debe ser único.')
     ]
 
-    @api.depends('stop_ids', 'name', 'reference_coordinates')
+    @api.depends('outbound_distance', 'return_distance')
+    def _compute_total_distance(self):
+        for route in self:
+            route.estimated_distance = round((route.outbound_distance or 0.0) + (route.return_distance or 0.0), 2)
+
+    @api.depends('stop_ids', 'name', 'reference_coordinates', 'return_coordinates')
     def _compute_route_map_html(self):
         for route in self:
             if not route.id:
@@ -192,4 +236,9 @@ class TransportRouteStop(models.Model):
         string='Parada Obligatoria',
         default=True
     )
+    stop_direction = fields.Selection([
+        ('outbound', 'Ida / Salida'),
+        ('inbound', 'Retorno / Regreso'),
+        ('both', 'Ambos Sentidos')
+    ], string='Sentido Parada', default='outbound', required=True)
 
