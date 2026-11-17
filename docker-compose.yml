@@ -20,6 +20,8 @@ services:
       - db
     ports:
       - "8069:8069"
+    env_file:
+      - .env
     environment:
       HOST: db
       USER: odoo
@@ -28,6 +30,7 @@ services:
       - odoo16-web-data:/var/lib/odoo
       - ./addons:/mnt/extra-addons
       - ./config:/etc/odoo/config
+      - ./.env:/etc/odoo/.env:ro
     networks:
       - default
       - traccar_net

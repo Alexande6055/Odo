@@ -1,0 +1,214 @@
+/* ==========================================================================
+   ESTILOS NATIVOS DEL DASHBOARD DE TRANSPORTE UNIVERSITARIO (OWL 2)
+   Universidad Técnica de Ambato (UTA)
+   ========================================================================== */
+
+.o_transport_native_dashboard {
+    background-color: #0b1329;
+    color: #f1f5f9;
+    padding: 20px;
+    min-height: calc(100vh - 48px);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+    /* 1. Header */
+    .dashboard-header {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        padding: 16px 20px;
+        border-radius: 12px;
+        border: 1px solid #334155;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+        .header-icon-box {
+            width: 48px;
+            height: 48px;
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .live-dot-pulse {
+            width: 9px;
+            height: 9px;
+            background-color: #22c55e;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            animation: pulse-green 1.8s infinite;
+        }
+    }
+
+    /* 2. KPI Cards */
+    .kpi-card {
+        background: #1e293b;
+        border-radius: 10px;
+        padding: 14px 16px;
+        border: 1px solid #334155;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+        &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        &.border-left-primary { border-left: 4px solid #0284c7; }
+        &.border-left-success { border-left: 4px solid #22c55e; }
+        &.border-left-info { border-left: 4px solid #38bdf8; }
+        &.border-left-warning { border-left: 4px solid #f59e0b; }
+        &.border-left-danger { border-left: 4px solid #ef4444; }
+        &.border-left-purple { border-left: 4px solid #a855f7; }
+
+        .kpi-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #94a3b8;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .kpi-value {
+            font-size: 22px;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 4px;
+
+            .kpi-subtext {
+                font-size: 12px;
+                color: #64748b;
+                font-weight: 500;
+            }
+        }
+
+        .text-purple {
+            color: #c084fc !important;
+        }
+
+        .kpi-meta {
+            font-size: 11px;
+            color: #64748b;
+        }
+    }
+
+    /* 3. Paneles Generales */
+    .dashboard-panel {
+        background: #1e293b;
+        border-radius: 12px;
+        border: 1px solid #334155;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+        overflow: hidden;
+
+        .panel-header {
+            padding: 12px 16px;
+            background: rgba(15, 23, 42, 0.6);
+            border-bottom: 1px solid #334155;
+            font-size: 14px;
+        }
+
+        .panel-body {
+            padding: 16px;
+        }
+    }
+
+    /* 4. Canvas e Iframe del Mapa */
+    .dashboard-map-canvas {
+        height: 520px;
+        width: 100%;
+        background-color: #0f172a;
+        border: none;
+        display: block;
+        z-index: 1;
+    }
+
+    /* Marcador de bus animado en Leaflet */
+    .custom-bus-icon-container {
+        background: transparent;
+        border: none;
+
+        .bus-pin-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .bus-pin {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+            border: 2px solid #ffffff;
+
+            &.pulse {
+                animation: bus-radar 2s infinite;
+            }
+        }
+
+        .bus-plate-label {
+            background: #0f172a;
+            color: #38bdf8;
+            font-weight: 700;
+            font-size: 9px;
+            padding: 1px 4px;
+            border-radius: 4px;
+            border: 1px solid #0284c7;
+            margin-top: 2px;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+    }
+
+    /* 5. Feed de Incidencias */
+    .incident-feed-item {
+        background: #0f172a;
+        border-left: 3px solid #64748b;
+        transition: background 0.15s ease;
+
+        &:hover {
+            background: #172554;
+        }
+
+        &.incident-border-high {
+            border-left-color: #ef4444;
+        }
+        &.incident-border-medium {
+            border-left-color: #f59e0b;
+        }
+        &.incident-border-low {
+            border-left-color: #38bdf8;
+        }
+    }
+
+    .cursor-pointer {
+        cursor: pointer;
+    }
+}
+
+/* Animaciones */
+@keyframes pulse-green {
+    0% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 7px rgba(34, 197, 94, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    }
+}
+
+@keyframes bus-radar {
+    0% {
+        box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.8);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(56, 189, 248, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(56, 189, 248, 0);
+    }
+}

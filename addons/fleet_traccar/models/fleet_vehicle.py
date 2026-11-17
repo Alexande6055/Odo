@@ -76,8 +76,9 @@ class FleetVehicle(models.Model):
     @api.depends('traccar_device_id', 'gps_imei')
     def _compute_traccar_map_url(self):
         import urllib.parse
+        from .geo_utils import get_configured_map_web_url
+        map_base = get_configured_map_web_url(self.env)
         ICP = self.env['ir.config_parameter'].sudo()
-        map_base = (ICP.get_param('fleet_traccar.map_url') or 'http://localhost:3000').strip().rstrip('/')
         user = (ICP.get_param('fleet_traccar.user') or '').strip()
         password = ICP.get_param('fleet_traccar.password') or ''
         for vehicle in self:

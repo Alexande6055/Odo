@@ -116,3 +116,63 @@ def get_effective_traccar_url(url: str) -> str:
         return gateway_url
     return url
 
+
+def get_configured_map_web_url(env=None) -> str:
+    """
+    Obtiene la URL del microservicio web de mapas (React / Vite).
+    Prioridad:
+    1. Variables de entorno (MAP_WEB_URL o MAP_WEB_PORT)
+    2. Archivo .env (/etc/odoo/.env, /mnt/extra-addons/../.env, o raíz)
+    3. Parámetro de sistema en Odoo (fleet_traccar.map_url)
+    4. Valor por defecto: http://localhost:30001
+    """
+    import os
+    from pathlib import Path
+
+    # 1. Variables de entorno en el SO / contenedor
+    env_url = os.environ.get('MAP_WEB_URL')
+    if env_url:
+        return env_url.strip().rstrip('/')
+
+    env_port = os.environ.get('MAP_WEB_PORT')
+    if env_port:
+        return f"http://localhost:{env_port.strip()}".rstrip('/')
+
+    # 2. Leer archivo .env si existe en las rutas conocidas
+    env_paths = [
+        Path('/mnt/extra-addons/.env'),
+        Path('/mnt/extra-addons/fleet_traccar/.env'),
+        Path('/etc/odoo/.env'),
+        Path('/home/alexander/MEGA/Documentos/Gestion de Clidad/Odo/.env'),
+        Path('.env'),
+    ]
+    for p in env_paths:
+        try:
+            if p.exists():
+                with open(p, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith('#') and '=' in line:
+                            k, v = line.split('=', 1)
+                            k = k.strip()
+                            v = v.strip().strip('"').strip("'")
+                            if k == 'MAP_WEB_URL' and v:
+                                return v.rstrip('/')
+                            elif k == 'MAP_WEB_PORT' and v:
+                                return f"http://localhost:{v}".rstrip('/')
+        except Exception:
+            pass
+
+    # 3. Parámetro ir.config_parameter en base de datos si se provee env
+    if env:
+        try:
+            icp_url = env['ir.config_parameter'].sudo().get_param('fleet_traccar.map_url')
+            if icp_url:
+                return icp_url.strip().rstrip('/')
+        except Exception:
+            pass
+
+    # 4. Fallback por defecto según requerimiento
+    return 'http://localhost:30001'
+
+

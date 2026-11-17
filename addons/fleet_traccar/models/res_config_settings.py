@@ -25,9 +25,14 @@ class ResConfigSettings(models.TransientModel):
     traccar_map_url = fields.Char(
         string='URL del Microservicio de Mapas',
         config_parameter='fleet_traccar.map_url',
-        default='http://localhost:3000',
-        help="URL del frontend React de mapas (ej. http://localhost:3000 con pnpm run dev, o http://localhost:3050 con Docker)"
+        default=lambda self: self._default_traccar_map_url(),
+        help="URL del frontend React de mapas (definido en archivo .env o configuración)"
     )
+
+    @api.model
+    def _default_traccar_map_url(self):
+        from .geo_utils import get_configured_map_web_url
+        return get_configured_map_web_url(self.env)
 
     def action_test_traccar_connection(self):
         """Prueba la conectividad y las credenciales con el servidor Traccar."""

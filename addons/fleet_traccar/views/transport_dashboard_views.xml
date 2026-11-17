@@ -1,37 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- REGISTRO SINGLETON DEL DASHBOARD -->
-    <record id="main_transport_dashboard" model="transport.dashboard">
-        <field name="name">Centro de Control y Monitoreo en Vivo</field>
-    </record>
-
-    <!-- VISTA FORMULARIO DEL DASHBOARD -->
-    <record id="view_transport_dashboard_form" model="ir.ui.view">
-        <field name="name">transport.dashboard.form</field>
-        <field name="model">transport.dashboard</field>
-        <field name="arch" type="xml">
-            <form string="Centro de Control de Transporte Universitario" create="false" edit="false" delete="false">
-                <header>
-                    <button name="action_open_fullscreen" 
-                            type="object" 
-                            string="Abrir en Pantalla Completa / Modo Sala de Monitoreo" 
-                            class="btn btn-primary" 
-                            icon="fa-expand"/>
-                </header>
-                <sheet>
-                    <field name="dashboard_html" widget="html" nolabel="1"/>
-                </sheet>
-            </form>
-        </field>
-    </record>
-
-    <!-- ACCIÓN DE VENTANA PARA EL DASHBOARD -->
-    <record id="action_transport_dashboard" model="ir.actions.act_window">
+    <!-- ACCIÓN DE CLIENTE NATIVA OWL (DENTRO DE LA ADMINISTRACIÓN DE ODOO, SIN IFRAME) -->
+    <record id="action_transport_dashboard_client" model="ir.actions.client">
         <field name="name">Centro de Control y Monitoreo</field>
-        <field name="res_model">transport.dashboard</field>
-        <field name="view_mode">form</field>
-        <field name="res_id" ref="main_transport_dashboard"/>
-        <field name="target">current</field>
-        <field name="context">{'create': False, 'edit': False, 'delete': False}</field>
+        <field name="tag">transport_dashboard_client_action</field>
+        <field name="target">main</field>
     </record>
 </odoo>

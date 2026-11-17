@@ -20,7 +20,7 @@
     <menuitem id="menu_transport_dashboard_action"
               name="Panel de Control (Dashboard)"
               parent="menu_transport_root"
-              action="action_transport_dashboard"
+              action="action_transport_dashboard_client"
               sequence="1"/>
 
     <!-- SECCIÓN 1: OPERACIONES -->

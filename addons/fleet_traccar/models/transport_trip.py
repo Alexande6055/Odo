@@ -187,8 +187,8 @@ class TransportTrip(models.Model):
     def _compute_trip_map_html(self):
         import urllib.parse
         import json
-        ICP = self.env['ir.config_parameter'].sudo()
-        map_base = (ICP.get_param('fleet_traccar.map_url') or 'http://localhost:3000').strip().rstrip('/')
+        from .geo_utils import get_configured_map_web_url
+        map_base = get_configured_map_web_url(self.env)
         user = (ICP.get_param('fleet_traccar.user') or '').strip()
         password = ICP.get_param('fleet_traccar.password') or ''
 
