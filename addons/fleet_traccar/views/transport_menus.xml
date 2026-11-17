@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- DESACTIVAR MENÚ CONVERSACIONES / DISCUSIONES (MAIL / CHAT) -->
+    <record id="mail.menu_root_discuss" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
+
+    <!-- DESACTIVAR MENÚ NATIVO DE FLOTA (FLEET) -->
+    <record id="fleet.menu_root" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
+
     <!-- MENÚ PRINCIPAL RAÍZ: Transporte Universitario -->
     <menuitem id="menu_transport_root"
               name="Transporte Universitario"
@@ -62,10 +72,16 @@
               sequence="40"/>
 
     <menuitem id="menu_transport_fleet_vehicles_action"
-              name="Vehículos y GPS"
+              name="Registro de Vehículos y Flota"
               parent="menu_transport_fleet_group"
-              action="fleet.fleet_vehicle_action"
+              action="action_transport_fleet_vehicle"
               sequence="10"/>
+
+    <menuitem id="menu_transport_vehicle_models_action"
+              name="Modelos de Buses / Vehículos"
+              parent="menu_transport_fleet_group"
+              action="fleet.fleet_vehicle_model_action"
+              sequence="15"/>
 
     <menuitem id="menu_transport_config_settings_action"
               name="Ajustes Traccar"

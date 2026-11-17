@@ -85,6 +85,14 @@
     .o_menu_systray {
         align-items: center !important;
 
+        /* Ocultar iconos de mensajería (Discuss) y actividades de la barra superior */
+        .o_MessagingMenu,
+        .o_mail_systray_item,
+        .o_ActivityMenuView,
+        .o_notification_systray {
+            display: none !important;
+        }
+
         /* Conmutador de Compañía */
         .o_switch_company_menu {
             .dropdown-toggle {
