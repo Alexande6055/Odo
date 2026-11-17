@@ -7,3 +7,4 @@ from . import transport_route
 from . import transport_trip
 from . import transport_incident
 from . import transport_metrics
+from . import transport_dashboard

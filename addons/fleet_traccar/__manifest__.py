@@ -20,6 +20,7 @@ Sistema Integral de Transporte y Monitoreo GPS para la Universidad Técnica de A
         'data/ir_sequence_data.xml',
         'data/ir_cron_data.xml',
         'data/transport_demo_data.xml',
+        'views/transport_dashboard_views.xml',
         'views/transport_route_views.xml',
         'views/transport_trip_views.xml',
         'views/transport_incident_views.xml',

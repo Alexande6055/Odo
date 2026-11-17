@@ -6,4 +6,5 @@ access_transport_trip_stop_check_user,transport.trip.stop.check.user,model_trans
 access_transport_trip_point_user,transport.trip.point.user,model_transport_trip_point,base.group_user,1,1,1,1
 access_transport_trip_incident_user,transport.trip.incident.user,model_transport_trip_incident,base.group_user,1,1,1,1
 access_transport_metrics_summary_user,transport.metrics.summary.user,model_transport_metrics_summary,base.group_user,1,1,1,1
+access_transport_dashboard_user,transport.dashboard.user,model_transport_dashboard,base.group_user,1,1,1,1
 

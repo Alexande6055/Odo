@@ -6,6 +6,13 @@
               sequence="25"
               web_icon="fleet_traccar,static/description/icon.png"/>
 
+    <!-- SECCIÓN 0: CENTRO DE MANDO / DASHBOARD EN VIVO (PRIMERA PANTALLA) -->
+    <menuitem id="menu_transport_dashboard_action"
+              name="Panel de Control (Dashboard)"
+              parent="menu_transport_root"
+              action="action_transport_dashboard"
+              sequence="1"/>
+
     <!-- SECCIÓN 1: OPERACIONES -->
     <menuitem id="menu_transport_operations"
               name="Operaciones y Seguimiento"
