@@ -51,6 +51,21 @@ class FleetVehicle(models.Model):
         readonly=True,
         copy=False
     )
+    traccar_status_label = fields.Selection(
+        [
+            ('online', 'En Línea'),
+            ('offline', 'Desconectado'),
+            ('unknown', 'Sin Vincular'),
+        ],
+        string='Estado de Conexión GPS',
+        compute='_compute_traccar_display_fields',
+        store=False,
+    )
+    model_display_short = fields.Char(
+        string='Modelo (Corto)',
+        compute='_compute_traccar_display_fields',
+        store=False,
+    )
     osm_map_url = fields.Char(
         string='Enlace OpenStreetMap',
         compute='_compute_osm_map_url'
@@ -64,6 +79,25 @@ class FleetVehicle(models.Model):
         compute='_compute_traccar_map_iframe',
         sanitize=False
     )
+
+    @api.depends('traccar_status', 'model_id', 'model_id.brand_id', 'model_id.name')
+    def _compute_traccar_display_fields(self):
+        """Genera etiquetas legibles en español para tarjetas y vista detalle."""
+        for vehicle in self:
+            raw_status = (vehicle.traccar_status or '').strip().lower()
+            if raw_status == 'online':
+                vehicle.traccar_status_label = 'online'
+            elif raw_status == 'offline':
+                vehicle.traccar_status_label = 'offline'
+            else:
+                vehicle.traccar_status_label = 'unknown'
+
+            if vehicle.model_id:
+                brand = vehicle.model_id.brand_id.name if vehicle.model_id.brand_id else ''
+                model_name = vehicle.model_id.name or ''
+                vehicle.model_display_short = f"{brand} • {model_name}" if brand and model_name else (model_name or brand)
+            else:
+                vehicle.model_display_short = _('Bus Universitario')
 
     @api.depends('last_latitude', 'last_longitude')
     def _compute_osm_map_url(self):
@@ -131,6 +165,10 @@ class FleetVehicle(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        registered_state = self.env.ref('fleet.fleet_vehicle_state_registered', raise_if_not_found=False)
+        for vals in vals_list:
+            if registered_state and 'state_id' not in vals:
+                vals['state_id'] = registered_state.id
         vehicles = super(FleetVehicle, self).create(vals_list)
         for vehicle in vehicles:
             if vehicle.gps_imei and not vehicle.traccar_device_id:

@@ -150,7 +150,7 @@
 
     <!-- ACCIÓN DE VENTANA -->
     <record id="action_transport_metrics_summary" model="ir.actions.act_window">
-        <field name="name">Panel de Indicadores y Calidad</field>
+        <field name="name">Evaluaciones de Calidad</field>
         <field name="res_model">transport.metrics.summary</field>
         <field name="view_mode">tree,form</field>
         <field name="help" type="html">

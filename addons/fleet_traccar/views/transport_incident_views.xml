@@ -140,26 +140,25 @@
                 <templates>
                     <t t-name="kanban-box">
                         <div class="oe_kanban_global_click p-3 mb-2 shadow-sm border rounded bg-white">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span class="badge rounded-pill bg-light text-dark border">
-                                    <field name="incident_type" widget="badge"/>
-                                </span>
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-1 mb-2">
+                                <field name="incident_type" widget="badge" class="text-truncate" style="max-width: 65%;"/>
                                 <field name="severity" widget="badge" 
                                        decoration-danger="severity == 'high'" 
                                        decoration-warning="severity == 'medium'" 
                                        decoration-info="severity == 'low'"/>
                             </div>
                             <strong class="h6 text-danger d-block mb-1"><field name="name"/></strong>
-                            <div class="text-muted small mb-2">
-                                <i class="fa fa-road me-1 text-primary" title="Ruta"/> <field name="route_id"/><br/>
-                                <i class="fa fa-bus me-1 text-info" title="Vehículo"/> <field name="vehicle_id"/> • <field name="trip_id"/><br/>
-                                <i class="fa fa-clock-o me-1 text-secondary" title="Fecha/Hora"/> <field name="timestamp"/>
+                            <div class="small mb-2" style="color: #475569;">
+                                <div class="text-truncate"><i class="fa fa-road me-1 text-primary" title="Ruta"/> <field name="route_id"/></div>
+                                <div class="text-truncate"><i class="fa fa-bus me-1 text-info" title="Vehículo"/> <field name="vehicle_id"/> • <field name="trip_id"/></div>
+                                <div><i class="fa fa-clock-o me-1" title="Fecha/Hora"/> <field name="timestamp"/></div>
                             </div>
-                            <div class="border-top pt-2 d-flex justify-content-between align-items-center text-muted small">
-                                <span class="text-warning fw-bold">
-                                    <i class="fa fa-clock-o me-1" title="Retraso"/> <field name="delay_minutes"/> min
+                            <div t-if="record.delay_minutes.raw_value &gt; 0 or record.deviation_distance.raw_value &gt; 0"
+                                 class="border-top pt-2 d-flex justify-content-between align-items-center small">
+                                <span t-if="record.delay_minutes.raw_value &gt; 0" class="text-warning fw-bold">
+                                    <i class="fa fa-clock-o me-1" title="Retraso"/> +<field name="delay_minutes"/> min
                                 </span>
-                                <span class="text-danger fw-bold">
+                                <span t-if="record.deviation_distance.raw_value &gt; 0" class="text-danger fw-bold ms-auto">
                                     <i class="fa fa-map-marker me-1" title="Desvío"/> <field name="deviation_distance"/> m
                                 </span>
                             </div>

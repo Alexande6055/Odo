@@ -7,37 +7,47 @@
         <field name="inherit_id" ref="fleet.res_config_settings_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//div[@id='fleet']" position="inside">
-                <h2>Servidor Traccar GPS</h2>
+                <h2>Servidor Traccar GPS y Visor Satelital</h2>
                 <div class="row mt16 o_settings_container" id="traccar_config_setting">
                     <div class="col-12 col-lg-6 o_setting_box">
                         <div class="o_setting_right_pane">
-                            <span class="o_form_label">Conexión con Traccar</span>
+                            <span class="o_form_label fw-bold">Conexión con Traccar GPS</span>
                             <div class="text-muted">
-                                Configure la URL interna de Docker y las credenciales de acceso a la API de Traccar.
+                                Configure la URL y credenciales de acceso a la API REST del servidor Traccar.
                             </div>
                             <div class="content-group mt16">
-                                <div class="row mt8">
+                                <div class="row mt8 align-items-center">
                                     <label for="traccar_server_url" class="col-4 o_light_label"/>
                                     <field name="traccar_server_url" class="col-8" placeholder="http://traccar:8082"/>
                                 </div>
-                                <div class="row mt8">
+                                <div class="row mt8 align-items-center">
                                     <label for="traccar_user" class="col-4 o_light_label"/>
                                     <field name="traccar_user" class="col-8" placeholder="ej. usuario@correo.com"/>
                                 </div>
-                                <div class="row mt8">
+                                <div class="row mt8 align-items-center">
                                     <label for="traccar_password" class="col-4 o_light_label"/>
                                     <field name="traccar_password" class="col-8" password="True"/>
-                                </div>
-                                <div class="row mt8">
-                                    <label for="traccar_map_url" class="col-4 o_light_label"/>
-                                    <field name="traccar_map_url" class="col-8" placeholder="http://localhost:3050"/>
                                 </div>
                                 <div class="mt16">
                                     <button name="action_test_traccar_connection" 
                                             type="object" 
                                             string="Probar Conexión con Traccar" 
-                                            class="btn-secondary" 
+                                            class="btn btn-primary" 
                                             icon="fa-plug"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6 o_setting_box">
+                        <div class="o_setting_right_pane">
+                            <span class="o_form_label fw-bold">Microservicio de Mapas en Vivo</span>
+                            <div class="text-muted">
+                                URL base de respaldo cuando no está definida mediante variables en <code>.env</code> (<code>MAP_WEB_URL</code>).
+                            </div>
+                            <div class="content-group mt16">
+                                <div class="row mt8 align-items-center">
+                                    <label for="traccar_map_url" class="col-4 o_light_label"/>
+                                    <field name="traccar_map_url" class="col-8" placeholder="http://localhost:3001"/>
                                 </div>
                             </div>
                         </div>

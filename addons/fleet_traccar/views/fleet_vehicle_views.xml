@@ -1,420 +1,561 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- ACCIÓN PERSONALIZADA: REGISTRO DE VEHÍCULOS Y BUSES UNIVERSITARIOS -->
+    <!-- =========================================================================
+         MODELOS DE BUSES / VEHÍCULOS (100% EN ESPAÑOL)
+         ========================================================================= -->
+    <record id="view_transport_vehicle_model_tree" model="ir.ui.view">
+        <field name="name">transport.fleet.vehicle.model.tree</field>
+        <field name="model">fleet.vehicle.model</field>
+        <field name="arch" type="xml">
+            <tree string="Modelos de Buses y Vehículos">
+                <field name="brand_id" string="Marca"/>
+                <field name="name" string="Nombre del Modelo"/>
+                <field name="category_id" string="Categoría" optional="show"/>
+                <field name="seats" string="Plazas" optional="show"/>
+                <field name="default_fuel_type" string="Combustible" optional="show"/>
+                <field name="vehicle_count" string="Unidades"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_transport_vehicle_model_form" model="ir.ui.view">
+        <field name="name">transport.fleet.vehicle.model.form</field>
+        <field name="model">fleet.vehicle.model</field>
+        <field name="arch" type="xml">
+            <form string="Modelo de Bus / Vehículo">
+                <sheet>
+                    <widget name="web_ribbon" title="Archivado" bg_color="bg-danger" attrs="{'invisible': [('active', '=', True)]}"/>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_model_vehicle" type="object" icon="fa-bus" class="oe_stat_button"
+                                attrs="{'invisible': [('vehicle_count', '=', 0)]}">
+                            <field name="vehicle_count" widget="statinfo" string="Unidades"/>
+                        </button>
+                    </div>
+                    <field name="image_128" widget="image" class="oe_avatar"/>
+                    <div class="oe_title">
+                        <label for="name" string="Nombre del Modelo"/>
+                        <h1>
+                            <field name="name" placeholder="Ej. Bus Urbano AK"/>
+                        </h1>
+                        <label for="brand_id" string="Marca / Fabricante"/>
+                        <h2>
+                            <field name="brand_id" placeholder="Ej. Hino, Mercedes-Benz..."/>
+                        </h2>
+                    </div>
+                    <group col="2">
+                        <group string="Clasificación">
+                            <field name="active" invisible="1"/>
+                            <field name="vehicle_type" invisible="1"/>
+                            <field name="category_id" string="Categoría" options="{'no_create_edit': True}"/>
+                            <field name="model_year" string="Año de Modelo"/>
+                            <field name="seats" string="Capacidad de Asientos"/>
+                            <field name="doors" string="Número de Puertas"/>
+                        </group>
+                        <group string="Especificaciones Base">
+                            <field name="default_fuel_type" string="Combustible" required="1"/>
+                            <field name="transmission" string="Transmisión"/>
+                            <field name="horsepower" string="Potencia (CV)"/>
+                            <label for="power" string="Potencia (kW)"/>
+                            <div class="o_row d-inline-flex align-items-center gap-1">
+                                <field name="power" class="oe_inline"/><span>kW</span>
+                            </div>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_transport_vehicle_model_search" model="ir.ui.view">
+        <field name="name">transport.fleet.vehicle.model.search</field>
+        <field name="model">fleet.vehicle.model</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Modelos">
+                <field name="name" string="Modelo"/>
+                <field name="brand_id" string="Marca"/>
+                <group expand="1" string="Agrupar por">
+                    <filter name="groupby_brand" string="Marca" context="{'group_by': 'brand_id'}"/>
+                    <filter name="groupby_category" string="Categoría" context="{'group_by': 'category_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_transport_vehicle_model" model="ir.actions.act_window">
+        <field name="name">Modelos de Buses / Vehículos</field>
+        <field name="res_model">fleet.vehicle.model</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('vehicle_type', '=', 'car')]</field>
+        <field name="context">{'default_vehicle_type': 'car', 'search_default_groupby_brand': True}</field>
+        <field name="search_view_id" ref="view_transport_vehicle_model_search"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('view_transport_vehicle_model_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_transport_vehicle_model_form')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Cree un nuevo modelo de bus o vehículo universitario.
+            </p>
+            <p>
+                Defina la marca, capacidad de asientos y especificaciones estándar del vehículo.
+            </p>
+        </field>
+    </record>
+
+    <!-- =========================================================================
+         ACCIÓN PRINCIPAL: DIRECTORIO DE VEHÍCULOS Y BUSES (CARDS + DETALLE)
+         ========================================================================= -->
     <record id="action_transport_fleet_vehicle" model="ir.actions.act_window">
         <field name="name">Vehículos y Buses Universitarios</field>
         <field name="res_model">fleet.vehicle</field>
         <field name="view_mode">kanban,tree,form</field>
+        <field name="context">{}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 ¡Registra el primer bus o vehículo de la flota universitaria!
             </p>
             <p>
-                Asocia cada vehículo con su identificador IMEI de Traccar GPS para seguimiento satelital y control de rutas en tiempo real.
+                Asocia cada unidad con su código IMEI de Traccar GPS para monitoreo satelital en tiempo real.
             </p>
         </field>
     </record>
 
-    <!-- SOBRESCRIBIR LA ACCIÓN NATIVA DE FLEET PARA QUITAR LA VISTA DE ACTIVIDADES/CHATTER -->
     <record id="fleet.fleet_vehicle_action" model="ir.actions.act_window">
         <field name="name">Vehículos y Buses Universitarios</field>
         <field name="view_mode">kanban,tree,form</field>
+        <field name="context">{}</field>
     </record>
 
-    <!-- HERENCIA DE LA VISTA FORMULARIO DE VEHÍCULOS: 100% EN ESPAÑOL, SIN TAGS Y SIN CHATTER/MENSAJES -->
-    <record id="fleet_vehicle_view_form_inherit_traccar" model="ir.ui.view">
-        <field name="name">fleet.vehicle.form.inherit.traccar</field>
-        <field name="model">fleet.vehicle</field>
-        <field name="inherit_id" ref="fleet.fleet_vehicle_view_form"/>
-        <field name="arch" type="xml">
-            <!-- 1. Cintas / Ribbons de Estado GPS en Español -->
-            <xpath expr="//div[@name='button_box']" position="before">
-                <widget name="web_ribbon" title="GPS En Línea" bg_color="bg-success" attrs="{'invisible': [('traccar_status', '!=', 'online')]}"/>
-                <widget name="web_ribbon" title="GPS Desconectado" bg_color="bg-danger" attrs="{'invisible': [('traccar_status', '!=', 'offline')]}"/>
-            </xpath>
-            <xpath expr="//sheet/widget[@name='web_ribbon']" position="attributes">
-                <attribute name="title">Archivado / Retirado</attribute>
-            </xpath>
-
-            <!-- 2. Botón de Nuevo Conductor en Encabezado en Español -->
-            <xpath expr="//button[@name='action_accept_driver_change']" position="attributes">
-                <attribute name="string">Aplicar Nuevo Conductor</attribute>
-            </xpath>
-
-            <!-- 3. Botones de Estadísticas y GPS en la barra superior (button_box) 100% en Español -->
-            <xpath expr="//div[@name='button_box']" position="replace">
-                <div class="oe_button_box" name="button_box">
-                    <button name="action_open_traccar_map" 
-                            type="object" 
-                            class="oe_stat_button" 
-                            icon="fa-compass">
-                        <div class="o_stat_info">
-                            <span class="o_stat_text">Mapa en Vivo</span>
-                            <span class="o_stat_value">
-                                <field name="last_speed" class="oe_inline"/> km/h
-                            </span>
-                        </div>
-                    </button>
-                    <button name="action_open_osm_map" 
-                            type="object" 
-                            class="oe_stat_button" 
-                            icon="fa-map"
-                            attrs="{'invisible': [('last_latitude', '=', 0.0), ('last_longitude', '=', 0.0)]}">
-                        <div class="o_stat_info">
-                            <span class="o_stat_text">OpenStreetMap</span>
-                            <span class="o_stat_value text-muted">Libre</span>
-                        </div>
-                    </button>
-                    <button name="open_assignation_logs"
-                        type="object"
-                        class="oe_stat_button"
-                        icon="fa-history">
-                        <field name="history_count" widget="statinfo" string="Choferes"/>
-                    </button>
-                    <button name="return_action_to_open"
-                        type="object"
-                        class="oe_stat_button"
-                        icon="fa-book"
-                        context="{'xml_id':'fleet_vehicle_log_contract_action', 'search_default_inactive': not active}"
-                        help="Ver contratos de este vehículo">
-                        <field name="contract_count" widget="statinfo" string="Contratos"/>
-                    </button>
-                    <button name="return_action_to_open"
-                        type="object"
-                        class="oe_stat_button"
-                        icon="fa-wrench"
-                        context="{'xml_id':'fleet_vehicle_log_services_action', 'search_default_inactive': not active}"
-                        attrs="{'invisible': [('service_activity', '!=', 'none')]}"
-                        help="Ver registros de mantenimiento">
-                        <field name="service_count" widget="statinfo" string="Mantenimiento"/>
-                    </button>
-                    <button name="return_action_to_open"
-                        type="object"
-                        class="oe_stat_button text-danger"
-                        icon="fa-wrench"
-                        context="{'xml_id':'fleet_vehicle_log_services_action', 'search_default_inactive': not active}"
-                        attrs="{'invisible': [('service_activity', '!=', 'overdue')]}"
-                        help="Ver registros de mantenimiento">
-                        <field name="service_count" widget="statinfo" string="Mantenimiento"/>
-                    </button>
-                    <button name="return_action_to_open"
-                        type="object"
-                        class="oe_stat_button text-warning"
-                        icon="fa-wrench"
-                        context="{'xml_id':'fleet_vehicle_log_services_action', 'search_default_inactive': not active}"
-                        attrs="{'invisible': [('service_activity', '!=', 'today')]}"
-                        help="Ver registros de mantenimiento">
-                        <field name="service_count" widget="statinfo" string="Mantenimiento"/>
-                    </button>
-                    <button name="return_action_to_open"
-                        type="object"
-                        class="oe_stat_button"
-                        icon="fa-tachometer"
-                        context="{'xml_id':'fleet_vehicle_odometer_action'}"
-                        help="Ver registros de odómetro"
-                        attrs="{'invisible': [('vehicle_type', '!=', 'car')]}">
-                        <field name="odometer_count" widget="statinfo" string="Odómetro"/>
-                    </button>
-                </div>
-            </xpath>
-
-            <!-- 4. Título: En Español y SIN TAGS (Eliminamos tag_ids y sus etiquetas) -->
-            <xpath expr="//div[hasclass('oe_title')]" position="replace">
-                <div class="oe_title">
-                    <label for="model_id" string="Modelo del Bus / Vehículo"/>
-                    <h1>
-                        <field name="model_id" placeholder="Ej. Hino AK8J, Mercedes-Benz O500, Coaster..."/>
-                    </h1>
-                    <label for="license_plate" string="Placa de Matrícula"/>
-                    <h2>
-                        <field name="license_plate" class="oe_inline" placeholder="Ej. TBA-1001"/>
-                    </h2>
-                </div>
-            </xpath>
-
-            <!-- 5. Grupo Principal de Datos del Vehículo y Conductor (100% Español y Limpio) -->
-            <xpath expr="//sheet/group[1]" position="replace">
-                <group col="2">
-                    <group string="Conductor y Asignación">
-                        <field name="active" invisible="1"/>
-                        <field name="vehicle_type" invisible="1"/>
-                        <field name="driver_id" string="Conductor Asignado" domain="['|', ('company_id', '=', False ), ('company_id', '=', company_id)]"/>
-                        <field name="future_driver_id" string="Próximo Conductor"/>
-                        <field name="next_assignation_date" string="Fecha de Próxima Asignación"/>
-                        <field name="company_id" string="Compañía / Universidad" groups="base.group_multi_company"/>
-                    </group>
-                    <group string="Datos del Vehículo y GPS">
-                        <field name="category_id" string="Categoría del Vehículo"/>
-                        <field name="acquisition_date" string="Fecha de Adquisición" attrs="{'invisible': [('vehicle_type', '!=', 'car')]}"/>
-                        <field name="vin_sn" string="Número de Chasis / VIN" placeholder="Ej. 1HGCR2F83HA000000"/>
-                        <field name="gps_imei" string="Código IMEI GPS (Traccar)" placeholder="Ej. 8632940401001"/>
-                        <label for="odometer" string="Odómetro / Kilometraje" attrs="{'invisible': [('vehicle_type', '!=', 'car')]}"/>
-                        <div class="o_row" attrs="{'invisible': [('vehicle_type', '!=', 'car')]}">
-                            <field name="odometer"/>
-                            <field name="odometer_unit"/>
-                        </div>
-                        <field name="manager_id" string="Responsable de Flota" domain="[('share', '=', False)]"/>
-                        <field name="location" string="Ubicación / Campus Base" placeholder="Ej. Campus Huachi, Campus Ingahurco..."/>
-                    </group>
-                </group>
-            </xpath>
-
-            <!-- 6. Pestañas (Notebook): 100% Español, Reorganizadas con Monitoreo GPS de Primera Pestaña -->
-            <xpath expr="//notebook" position="replace">
-                <notebook>
-                    <!-- Pestaña 1: Telemetría y Rastreo Satelital (Traccar) -->
-                    <page string="Seguimiento GPS (Traccar)" name="traccar_tracking">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <div>
-                                <button name="action_register_traccar_device" 
-                                        type="object" 
-                                        string="Vincular con Traccar" 
-                                        class="btn btn-secondary me-2" 
-                                        icon="fa-link"
-                                        attrs="{'invisible': [('traccar_device_id', '!=', 0), ('traccar_device_id', '!=', False)]}"/>
-                                <button name="action_sync_traccar_positions" 
-                                        type="object" 
-                                        string="Sincronizar Posición Ahora" 
-                                        class="btn btn-primary me-2" 
-                                        icon="fa-refresh"
-                                        attrs="{'invisible': [('traccar_device_id', 'in', (False, 0))]}"/>
-                                <button name="action_open_traccar_map" 
-                                        type="object" 
-                                        string="Abrir Mapa en Pantalla Completa" 
-                                        class="btn btn-info me-2 text-white" 
-                                        icon="fa-external-link"/>
-                                <button name="action_open_traccar_native_web" 
-                                        type="object" 
-                                        string="Panel Traccar Web" 
-                                        class="btn btn-outline-secondary me-2" 
-                                        icon="fa-dashboard"/>
-                            </div>
-                        </div>
-
-                        <group>
-                            <group string="Dispositivo Traccar GPS">
-                                <field name="gps_imei" string="Número IMEI GPS"/>
-                                <field name="traccar_device_id" string="ID Dispositivo Traccar"/>
-                                <field name="traccar_status" string="Estado de Conexión" widget="badge" 
-                                       decoration-success="traccar_status == 'online'" 
-                                       decoration-danger="traccar_status == 'offline'" 
-                                       decoration-muted="traccar_status == 'unknown'"/>
-                            </group>
-                            <group string="Última Telemetría Registrada">
-                                <field name="last_latitude" string="Latitud"/>
-                                <field name="last_longitude" string="Longitud"/>
-                                <field name="last_speed" string="Velocidad (km/h)"/>
-                                <field name="last_gps_update" string="Última Señal GPS"/>
-                                <field name="osm_map_url" string="Ver Mapa" widget="url" text="Ver en OpenStreetMap"/>
-                            </group>
-                        </group>
-
-                        <div class="mt-4">
-                            <label for="traccar_map_iframe" string="Visor de Ruta y Mapa en Tiempo Real" class="o_form_label h4 mb-2 d-block"/>
-                            <field name="traccar_map_iframe" widget="html" nolabel="1"/>
-                        </div>
-                    </page>
-
-                    <!-- Pestaña 2: Especificaciones Técnicas del Vehículo / Bus -->
-                    <page string="Especificaciones Técnicas" name="model_technical">
-                        <group>
-                            <group string="Carrocería y Capacidad">
-                                <field name="model_year" string="Año de Fabricación"/>
-                                <field name="transmission" string="Transmisión"/>
-                                <field name="color" string="Color de Carrocería"/>
-                                <field name="seats" string="Capacidad de Asientos / Pasajeros" attrs="{'invisible': [('vehicle_type', '!=', 'car')]}"/>
-                                <field name="doors" string="Número de Puertas" attrs="{'invisible': [('vehicle_type', '!=', 'car')]}"/>
-                                <field name="trailer_hook" string="Gancho de Remolque" attrs="{'invisible': [('vehicle_type', '!=', 'car')]}"/>
-                            </group>
-                            <group string="Motor y Combustible" attrs="{'invisible': [('vehicle_type', '!=', 'car')]}">
-                                <field name="horsepower" string="Potencia (CV)"/>
-                                <label for="power" string="Potencia (kW)"/>
-                                <div class="o_row">
-                                    <field name="power"/><span> kW</span>
-                                </div>
-                                <field name="fuel_type" string="Tipo de Combustible"/>
-                                <label for="co2" string="Emisiones CO2"/>
-                                <div class="o_row" name="co2">
-                                    <field name="co2"/><span> g/km</span>
-                                </div>
-                                <field name="co2_standard" string="Normativa de Emisiones"/>
-                            </group>
-                        </group>
-                    </page>
-
-                    <!-- Pestaña 3: Costos y Valoración -->
-                    <page string="Costos y Contratos" name="costs_and_contracts">
-                        <group>
-                            <group string="Valores del Vehículo">
-                                <field name="car_value" string="Valor de Adquisición" widget="monetary"/>
-                                <field name="net_car_value" string="Valor Neto Actual" widget="monetary"/>
-                                <field name="residual_value" string="Valor Residual Estimado" widget="monetary"/>
-                                <field name="first_contract_date" string="Fecha Primer Contrato"/>
-                            </group>
-                            <group string="Impuestos y Tasas">
-                                <field name="horsepower_tax" string="Impuesto Vehicular" widget="monetary"/>
-                            </group>
-                        </group>
-                    </page>
-
-                    <!-- Pestaña 4: Notas y Observaciones -->
-                    <page string="Notas y Observaciones" name="vehicle_notes">
-                        <field name="description" nolabel="1" placeholder="Escriba aquí notas u observaciones sobre el estado del vehículo, mantenimiento preventivo o asignaciones especiales..."/>
-                    </page>
-                </notebook>
-            </xpath>
-
-            <!-- 7. ELIMINAR COMPLETAMENTE EL CHATTER (Envío de mensajes, notas y actividades) -->
-            <xpath expr="//div[hasclass('oe_chatter')]" position="replace"/>
-        </field>
-    </record>
-
-    <!-- HERENCIA DE LA VISTA LISTA (TREE): SIN TAGS, SIN ACTIVIDADES Y 100% EN ESPAÑOL -->
-    <record id="fleet_vehicle_view_tree_inherit_traccar" model="ir.ui.view">
-        <field name="name">fleet.vehicle.tree.inherit.traccar</field>
-        <field name="model">fleet.vehicle</field>
-        <field name="inherit_id" ref="fleet.fleet_vehicle_view_tree"/>
-        <field name="arch" type="xml">
-            <!-- Eliminar tags y activities del listado -->
-            <xpath expr="//field[@name='tag_ids']" position="replace"/>
-            <xpath expr="//field[@name='activity_exception_decoration']" position="replace"/>
-
-            <!-- Traducir encabezados de columnas -->
-            <xpath expr="//field[@name='license_plate']" position="attributes">
-                <attribute name="string">Placa</attribute>
-            </xpath>
-            <xpath expr="//field[@name='model_id']" position="attributes">
-                <attribute name="string">Modelo del Vehículo</attribute>
-            </xpath>
-            <xpath expr="//field[@name='category_id']" position="attributes">
-                <attribute name="string">Categoría</attribute>
-            </xpath>
-            <xpath expr="//field[@name='driver_id']" position="attributes">
-                <attribute name="string">Conductor Asignado</attribute>
-            </xpath>
-            <xpath expr="//field[@name='future_driver_id']" position="attributes">
-                <attribute name="string">Próximo Conductor</attribute>
-            </xpath>
-            <xpath expr="//field[@name='acquisition_date']" position="attributes">
-                <attribute name="string">Fecha Adquisición</attribute>
-            </xpath>
-            <xpath expr="//field[@name='state_id']" position="attributes">
-                <attribute name="string">Estado Flota</attribute>
-            </xpath>
-
-            <!-- Columnas de Telemetría GPS Traccar -->
-            <xpath expr="//field[@name='state_id']" position="before">
-                <field name="gps_imei" string="IMEI GPS" optional="show"/>
-                <field name="traccar_status" string="Estado GPS" widget="badge" 
-                       decoration-success="traccar_status == 'online'" 
-                       decoration-danger="traccar_status == 'offline'" 
-                       optional="show"/>
-                <field name="last_speed" string="Velocidad (km/h)" optional="show"/>
-                <field name="last_gps_update" string="Última Señal GPS" optional="show"/>
-            </xpath>
-        </field>
-    </record>
-
-    <!-- HERENCIA DE LA VISTA KANBAN: SIN TAGS, SIN CHATTER/ACTIVIDADES Y EN ESPAÑOL -->
+    <!-- =========================================================================
+         1. VISTA DE TARJETAS DIRECTAS (SIN TABLERO KANBAN POR ESTADOS)
+         ========================================================================= -->
     <record id="fleet_vehicle_view_kanban_inherit_traccar" model="ir.ui.view">
         <field name="name">fleet.vehicle.kanban.inherit.traccar</field>
         <field name="model">fleet.vehicle</field>
         <field name="inherit_id" ref="fleet.fleet_vehicle_view_kanban"/>
         <field name="arch" type="xml">
-            <!-- Eliminar sección de tags y barra de actividades -->
-            <xpath expr="//div[hasclass('o_kanban_tags_section')]" position="replace"/>
-            <xpath expr="//progressbar" position="replace"/>
-            <xpath expr="//field[@name='activity_ids']" position="replace"/>
-            <xpath expr="//field[@name='activity_state']" position="replace"/>
+            <xpath expr="//kanban" position="replace">
+                <kanban class="o_transport_vehicle_cards_grid"
+                        create="true"
+                        quick_create="false"
+                        records_draggable="false"
+                        group_create="false"
+                        sample="0">
+                    <field name="id"/>
+                    <field name="active"/>
+                    <field name="license_plate"/>
+                    <field name="model_id"/>
+                    <field name="model_display_short"/>
+                    <field name="driver_id"/>
+                    <field name="location"/>
+                    <field name="seats"/>
+                    <field name="image_128"/>
+                    <field name="gps_imei"/>
+                    <field name="traccar_device_id"/>
+                    <field name="traccar_status"/>
+                    <field name="traccar_status_label"/>
+                    <field name="last_speed"/>
+                    <field name="last_gps_update"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div class="oe_kanban_global_click o_transport_v_card">
+                                <!-- Encabezado de la Unidad -->
+                                <div class="o_v_card_header">
+                                    <div class="o_v_card_identity">
+                                        <t t-if="record.image_128.raw_value">
+                                            <img t-att-src="kanban_image('fleet.vehicle', 'image_128', record.id.raw_value)"
+                                                 class="o_v_card_avatar_img"
+                                                 alt="Vehículo"/>
+                                        </t>
+                                        <t t-else="">
+                                            <div class="o_v_card_avatar_bus">
+                                                <i class="fa fa-bus" title="Bus Universitario"/>
+                                            </div>
+                                        </t>
+                                        <div class="o_v_card_titles">
+                                            <div class="o_v_card_plate">
+                                                <t t-esc="record.license_plate.value || 'SIN PLACA'"/>
+                                            </div>
+                                            <div class="o_v_card_model text-truncate" t-att-title="record.model_display_short.value">
+                                                <t t-esc="record.model_display_short.value || 'Bus Universitario'"/>
+                                            </div>
+                                        </div>
+                                    </div>
 
-            <!-- Añadir campos de Traccar a la vista -->
-            <xpath expr="//field[@name='state_id']" position="after">
-                <field name="traccar_status"/>
-                <field name="last_speed"/>
-                <field name="last_gps_update"/>
-                <field name="gps_imei"/>
-                <field name="traccar_device_id"/>
-            </xpath>
+                                    <!-- Pill Coherente de Estado GPS -->
+                                    <div class="o_v_card_status">
+                                        <span t-if="record.traccar_status_label.raw_value == 'online'"
+                                              class="o_v_pill o_v_pill_online">
+                                            <i class="fa fa-circle me-1" title="En Línea"/> En Línea
+                                        </span>
+                                        <span t-elif="record.traccar_status_label.raw_value == 'offline'"
+                                              class="o_v_pill o_v_pill_offline">
+                                            <i class="fa fa-circle-o me-1" title="Desconectado"/> Desconectado
+                                        </span>
+                                        <span t-else="" class="o_v_pill o_v_pill_idle">
+                                            <i class="fa fa-minus-circle me-1" title="Sin GPS"/> Sin GPS
+                                        </span>
+                                    </div>
+                                </div>
 
-            <!-- Encabezado de Estado GPS y Velocidad sobre el título -->
-            <xpath expr="//strong[hasclass('o_kanban_record_title')]" position="before">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span t-if="record.traccar_status.raw_value == 'online'" class="badge rounded-pill bg-success text-white px-2 py-1 shadow-sm">
-                        <i class="fa fa-circle text-white me-1" title="Online"/> En Línea
-                    </span>
-                    <span t-if="record.traccar_status.raw_value == 'offline'" class="badge rounded-pill bg-danger text-white px-2 py-1">
-                        <i class="fa fa-circle-o text-white me-1" title="Offline"/> Desconectado
-                    </span>
-                    <span t-if="!record.traccar_status.raw_value or record.traccar_status.raw_value == 'unknown' or record.traccar_status.raw_value == 'desconocido'" class="badge rounded-pill bg-secondary text-white px-2 py-1">
-                        <i class="fa fa-question-circle text-white me-1" title="Standby"/> Standby
-                    </span>
-                    <span t-if="record.last_speed.raw_value &gt; 0" class="badge rounded-pill bg-info text-white px-2 py-1 shadow-sm">
-                        <i class="fa fa-tachometer me-1" title="Velocidad"/> <field name="last_speed"/> km/h
-                    </span>
-                    <span t-if="record.last_speed.raw_value == 0 and record.traccar_status.raw_value == 'online'" class="badge rounded-pill bg-light text-dark border px-2 py-1">
-                        <i class="fa fa-pause me-1 text-warning" title="Detenido"/> Detenido
-                    </span>
-                </div>
-            </xpath>
+                                <!-- Banda de Telemetría Rápida -->
+                                <div class="o_v_card_metrics">
+                                    <div class="o_v_metric_item">
+                                        <span class="o_v_metric_label">Velocidad</span>
+                                        <t t-if="record.traccar_status_label.raw_value == 'online'">
+                                            <span t-if="record.last_speed.raw_value &gt; 0" class="o_v_metric_val text-primary">
+                                                <t t-esc="record.last_speed.value"/> km/h
+                                            </span>
+                                            <span t-else="" class="o_v_metric_val text-success">Detenido</span>
+                                        </t>
+                                        <t t-else="">
+                                            <span class="o_v_metric_val o_v_muted">
+                                                <t t-if="record.last_speed.raw_value &gt; 0">Últ.: <t t-esc="record.last_speed.value"/> km/h</t>
+                                                <t t-else="">0 km/h</t>
+                                            </span>
+                                        </t>
+                                    </div>
+                                    <div class="o_v_metric_divider"/>
+                                    <div class="o_v_metric_item">
+                                        <span class="o_v_metric_label">Capacidad</span>
+                                        <span class="o_v_metric_val">
+                                            <t t-if="record.seats.raw_value"><t t-esc="record.seats.raw_value"/> asientos</t>
+                                            <t t-else="">Por definir</t>
+                                        </span>
+                                    </div>
+                                </div>
 
-            <!-- Traducir etiqueta de próximo chofer -->
-            <xpath expr="//t[@t-if='record.future_driver_id.raw_value']" position="replace">
-                <t t-if="record.future_driver_id.raw_value">
-                    <small class="text-muted"><i class="fa fa-user-plus me-1" title="Próximo Conductor"/> Próximo: <field name="future_driver_id"/></small>
-                </t>
-            </xpath>
+                                <!-- Datos Operativos Clave -->
+                                <div class="o_v_card_meta">
+                                    <div class="o_v_meta_row">
+                                        <i class="fa fa-user-o o_v_meta_icon" title="Conductor"/>
+                                        <span class="o_v_meta_key">Conductor:</span>
+                                        <span class="o_v_meta_val text-truncate">
+                                            <t t-if="record.driver_id.raw_value"><field name="driver_id"/></t>
+                                            <t t-else=""><span class="o_v_placeholder">Sin asignar</span></t>
+                                        </span>
+                                    </div>
+                                    <div class="o_v_meta_row">
+                                        <i class="fa fa-map-marker o_v_meta_icon" title="Campus Base"/>
+                                        <span class="o_v_meta_key">Base:</span>
+                                        <span class="o_v_meta_val text-truncate">
+                                            <t t-if="record.location.raw_value"><field name="location"/></t>
+                                            <t t-else=""><span class="o_v_placeholder">Campus no asignado</span></t>
+                                        </span>
+                                    </div>
+                                    <div class="o_v_meta_tech">
+                                        <span t-if="record.gps_imei.raw_value">
+                                            <i class="fa fa-microchip me-1" title="IMEI"/>IMEI: <field name="gps_imei"/>
+                                        </span>
+                                        <span t-if="record.last_gps_update.value">
+                                            <i class="fa fa-clock-o me-1" title="Última Señal"/>Señal: <field name="last_gps_update"/>
+                                        </span>
+                                    </div>
+                                </div>
 
-            <!-- Telemetría e IMEI en la lista de detalles -->
-            <xpath expr="//div[hasclass('oe_kanban_details')]/ul" position="inside">
-                <li t-if="record.gps_imei.raw_value">
-                    <small class="text-muted"><i class="fa fa-microchip text-primary me-1" title="IMEI"/> IMEI: <field name="gps_imei"/></small>
-                </li>
-                <li t-if="record.last_gps_update.value">
-                    <small class="text-muted"><i class="fa fa-clock-o text-secondary me-1" title="Última Actualización GPS"/> GPS: <field name="last_gps_update"/></small>
-                </li>
-            </xpath>
-
-            <!-- Botones de Acción Directa en la Tarjeta Kanban -->
-            <xpath expr="//div[hasclass('oe_kanban_details')]" position="inside">
-                <div class="mt-2 pt-2 border-top d-flex align-items-center gap-1">
-                    <button name="action_open_traccar_map" type="object" class="btn btn-sm btn-info text-white flex-grow-1 py-1 px-2 d-flex align-items-center justify-content-center gap-1 shadow-sm" title="Abrir Mapa GPS en Vivo">
-                        <i class="fa fa-map-marker text-white" title="Mapa"/> Mapa en Vivo
-                    </button>
-                    <button name="action_sync_traccar_positions" type="object" class="btn btn-sm btn-outline-secondary py-1 px-2" title="Sincronizar Posición Traccar">
-                        <i class="fa fa-refresh text-primary" title="Sincronizar"/>
-                    </button>
-                </div>
+                                <!-- Pie de Acciones a Ancho Completo -->
+                                <div class="o_v_card_footer">
+                                    <button name="action_open_traccar_map"
+                                            type="object"
+                                            class="btn btn-sm o_v_btn_map flex-grow-1"
+                                            title="Abrir ubicación del bus en el mapa en vivo">
+                                        <i class="fa fa-map-marker me-1"/> Mapa en Vivo
+                                    </button>
+                                    <button name="action_sync_traccar_positions"
+                                            type="object"
+                                            class="btn btn-sm o_v_btn_sync"
+                                            title="Sincronizar última posición desde Traccar">
+                                        <i class="fa fa-refresh"/>
+                                    </button>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
             </xpath>
         </field>
     </record>
 
-    <!-- HERENCIA DE LA VISTA DE BÚSQUEDA (SEARCH): SIN TAGS Y 100% EN ESPAÑOL -->
+    <!-- =========================================================================
+         2. PÁGINA DE DETALLE DEL VEHÍCULO (FORMULARIO ENTERPRISE LIMPIO, SIN CARDS)
+         ========================================================================= -->
+    <record id="fleet_vehicle_view_form_inherit_traccar" model="ir.ui.view">
+        <field name="name">fleet.vehicle.form.inherit.traccar</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="replace">
+                <form string="Ficha de Unidad de Transporte" js_class="fleet_form" class="o_fleet_form o_transport_vehicle_form">
+                    <field name="service_activity" invisible="1"/>
+                    <field name="state_id" invisible="1"/>
+                    <field name="active" invisible="1"/>
+                    <field name="vehicle_type" invisible="1"/>
+                    <field name="company_id" invisible="1"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="country_code" invisible="1"/>
+                    <field name="traccar_status" invisible="1"/>
+
+                    <sheet>
+                        <!-- Cinta únicamente si la unidad está archivada (evita solapamiento con button_box) -->
+                        <widget name="web_ribbon" title="Archivado / Retirado" bg_color="bg-danger"
+                                attrs="{'invisible': [('active', '=', True)]}"/>
+
+                        <!-- Barra superior de estadísticas operativas (4 botones limpios sin solapamiento) -->
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_open_traccar_map"
+                                    type="object"
+                                    class="oe_stat_button"
+                                    icon="fa-compass"
+                                    help="Abrir mapa en vivo centrado en este vehículo">
+                                <div class="o_stat_info">
+                                    <span class="o_stat_value">
+                                        <field name="last_speed" class="oe_inline"/> km/h
+                                    </span>
+                                    <span class="o_stat_text">Mapa en Vivo</span>
+                                </div>
+                            </button>
+                            <button name="open_assignation_logs"
+                                    type="object"
+                                    class="oe_stat_button"
+                                    icon="fa-id-card-o"
+                                    help="Ver historial de conductores asignados">
+                                <field name="history_count" widget="statinfo" string="Choferes"/>
+                            </button>
+                            <button name="return_action_to_open"
+                                    type="object"
+                                    class="oe_stat_button"
+                                    icon="fa-wrench"
+                                    context="{'xml_id':'fleet_vehicle_log_services_action', 'search_default_inactive': not active}"
+                                    attrs="{'invisible': [('service_activity', '!=', 'none')]}"
+                                    help="Ver registros de servicios y mantenimiento">
+                                <field name="service_count" widget="statinfo" string="Servicios"/>
+                            </button>
+                            <button name="return_action_to_open"
+                                    type="object"
+                                    class="oe_stat_button text-danger"
+                                    icon="fa-wrench"
+                                    context="{'xml_id':'fleet_vehicle_log_services_action', 'search_default_inactive': not active}"
+                                    attrs="{'invisible': [('service_activity', '!=', 'overdue')]}"
+                                    help="Ver servicios vencidos">
+                                <field name="service_count" widget="statinfo" string="Servicios"/>
+                            </button>
+                            <button name="return_action_to_open"
+                                    type="object"
+                                    class="oe_stat_button text-warning"
+                                    icon="fa-wrench"
+                                    context="{'xml_id':'fleet_vehicle_log_services_action', 'search_default_inactive': not active}"
+                                    attrs="{'invisible': [('service_activity', '!=', 'today')]}"
+                                    help="Ver servicios programados hoy">
+                                <field name="service_count" widget="statinfo" string="Servicios"/>
+                            </button>
+                            <button name="return_action_to_open"
+                                    type="object"
+                                    class="oe_stat_button"
+                                    icon="fa-tachometer"
+                                    context="{'xml_id':'fleet_vehicle_odometer_action'}"
+                                    help="Ver registros de odómetro">
+                                <field name="odometer_count" widget="statinfo" string="Odómetro"/>
+                            </button>
+                        </div>
+
+                        <!-- Avatar del vehículo -->
+                        <field name="image_128" widget="image" class="oe_avatar"/>
+
+                        <!-- Encabezado jerárquico limpio: Placa + Estado GPS en línea + Modelo -->
+                        <div class="oe_title">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="text-uppercase fw-bold small" style="color: #64748b; letter-spacing: 0.6px;">
+                                    Unidad Registrada
+                                </span>
+                                <field name="traccar_status_label" widget="badge"
+                                       decoration-success="traccar_status_label == 'online'"
+                                       decoration-danger="traccar_status_label == 'offline'"
+                                       decoration-info="traccar_status_label == 'unknown'"/>
+                            </div>
+                            <h1 class="mb-1">
+                                <field name="license_plate" placeholder="Ej. TBA-1001" class="oe_inline"/>
+                            </h1>
+                            <div class="d-flex align-items-baseline gap-2">
+                                <label for="model_id" string="Modelo:" class="o_form_label mb-0 fw-semibold"/>
+                                <h3 class="mb-0 flex-grow-1">
+                                    <field name="model_id" placeholder="Seleccione marca y modelo del bus..."/>
+                                </h3>
+                            </div>
+                        </div>
+
+                        <!-- Ficha Principal Balanceada (5 campos izq. / 5 campos der., sin campos corporativos de renting) -->
+                        <group col="2" class="mt-3">
+                            <group string="Operación y Asignación">
+                                <field name="driver_id" string="Conductor Asignado"
+                                       domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]"/>
+                                <field name="manager_id" string="Responsable de Flota" domain="[('share', '=', False)]"/>
+                                <field name="location" string="Campus Base / Ubicación" placeholder="Ej. Campus Huachi"/>
+                                <field name="category_id" string="Categoría"/>
+                                <field name="seats" string="Capacidad (Asientos)"/>
+                            </group>
+                            <group string="Identificación y Rastreo">
+                                <field name="gps_imei" string="Código IMEI GPS (Traccar)" placeholder="Ej. 8632940401001"/>
+                                <field name="vin_sn" string="Número de Chasis / VIN" placeholder="Ej. 1HGCR2F83HA000000"/>
+                                <field name="model_year" string="Año de Fabricación"/>
+                                <field name="acquisition_date" string="Fecha de Registro"/>
+                                <label for="odometer" string="Odómetro Actual"/>
+                                <div class="o_row d-inline-flex align-items-center gap-2">
+                                    <field name="odometer" class="oe_inline"/>
+                                    <field name="odometer_unit" class="oe_inline" style="max-width: 70px;"/>
+                                </div>
+                            </group>
+                        </group>
+
+                        <!-- Pestañas de Detalle Profesional -->
+                        <notebook>
+                            <!-- Pestaña 1: Telemetría y Rastreo Satelital (Traccar) -->
+                            <page string="Seguimiento GPS (Traccar)" name="traccar_tracking">
+                                <div class="d-flex flex-wrap align-items-center gap-2 py-2 mb-3 border-bottom">
+                                    <button name="action_register_traccar_device"
+                                            type="object"
+                                            string="Vincular con Traccar"
+                                            class="btn btn-primary"
+                                            icon="fa-link"
+                                            attrs="{'invisible': [('traccar_device_id', '!=', 0), ('traccar_device_id', '!=', False)]}"/>
+                                    <button name="action_sync_traccar_positions"
+                                            type="object"
+                                            string="Sincronizar Posición Ahora"
+                                            class="btn btn-primary"
+                                            icon="fa-refresh"
+                                            attrs="{'invisible': [('traccar_device_id', 'in', (False, 0))]}"/>
+                                    <button name="action_open_traccar_map"
+                                            type="object"
+                                            string="Abrir Mapa en Pantalla Completa"
+                                            class="btn btn-info text-white"
+                                            icon="fa-external-link"/>
+                                    <button name="action_open_traccar_native_web"
+                                            type="object"
+                                            string="Panel Traccar Web"
+                                            class="btn btn-outline-primary"
+                                            icon="fa-dashboard"/>
+                                </div>
+
+                                <group col="2">
+                                    <group string="Estado del Dispositivo">
+                                        <field name="traccar_device_id" string="ID Dispositivo Traccar"/>
+                                        <field name="traccar_status_label" string="Estado de Conexión" widget="badge"
+                                               decoration-success="traccar_status_label == 'online'"
+                                               decoration-danger="traccar_status_label == 'offline'"
+                                               decoration-info="traccar_status_label == 'unknown'"/>
+                                        <field name="last_gps_update" string="Última Señal GPS"/>
+                                    </group>
+                                    <group string="Coordenadas y Velocidad">
+                                        <field name="last_latitude" string="Latitud"/>
+                                        <field name="last_longitude" string="Longitud"/>
+                                        <field name="last_speed" string="Velocidad Actual (km/h)"/>
+                                        <field name="osm_map_url" string="OpenStreetMap" widget="url" text="Abrir ubicación en OpenStreetMap"/>
+                                    </group>
+                                </group>
+
+                                <separator string="Visor de Ubicación en Tiempo Real" class="mt-3"/>
+                                <div class="mt-2">
+                                    <field name="traccar_map_iframe" widget="html" nolabel="1"/>
+                                </div>
+                            </page>
+
+                            <!-- Pestaña 2: Ficha Técnica del Bus -->
+                            <page string="Especificaciones Técnicas" name="model_technical">
+                                <group col="2">
+                                    <group string="Carrocería">
+                                        <field name="transmission" string="Transmisión"/>
+                                        <field name="color" string="Color"/>
+                                        <field name="doors" string="Número de Puertas"/>
+                                    </group>
+                                    <group string="Motorización">
+                                        <field name="fuel_type" string="Tipo de Combustible"/>
+                                        <field name="horsepower" string="Potencia (CV)"/>
+                                        <label for="power" string="Potencia (kW)"/>
+                                        <div class="o_row d-inline-flex align-items-center gap-1">
+                                            <field name="power" class="oe_inline"/><span>kW</span>
+                                        </div>
+                                    </group>
+                                </group>
+                            </page>
+
+                            <!-- Pestaña 3: Adquisición y Observaciones -->
+                            <page string="Adquisición y Observaciones" name="vehicle_notes">
+                                <group col="2">
+                                    <group string="Valoración de Unidad">
+                                        <field name="car_value" string="Valor de Adquisición" widget="monetary"/>
+                                        <field name="net_car_value" string="Valor Neto Actual" widget="monetary"/>
+                                    </group>
+                                </group>
+                                <separator string="Notas Operativas y Mantenimiento"/>
+                                <field name="description" nolabel="1"
+                                       placeholder="Registre aquí novedades técnicas, observaciones de ruta o historial de mantenimiento..."/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- =========================================================================
+         3. VISTA LISTA (TREE): LIMPIA, EN ESPAÑOL Y CON ESTADO GPS LEGIBLE
+         ========================================================================= -->
+    <record id="fleet_vehicle_view_tree_inherit_traccar" model="ir.ui.view">
+        <field name="name">fleet.vehicle.tree.inherit.traccar</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="replace">
+                <tree string="Vehículos y Buses Universitarios" sample="0">
+                    <field name="active" invisible="1"/>
+                    <field name="license_plate" string="Placa"/>
+                    <field name="model_id" string="Modelo del Bus"/>
+                    <field name="driver_id" string="Conductor Asignado" widget="many2one_avatar" optional="show"/>
+                    <field name="location" string="Campus Base" optional="show"/>
+                    <field name="seats" string="Plazas" optional="show"/>
+                    <field name="gps_imei" string="IMEI GPS" optional="show"/>
+                    <field name="traccar_status_label" string="Estado GPS" widget="badge"
+                           decoration-success="traccar_status_label == 'online'"
+                           decoration-danger="traccar_status_label == 'offline'"
+                           decoration-info="traccar_status_label == 'unknown'"/>
+                    <field name="last_speed" string="Velocidad (km/h)" optional="show"/>
+                    <field name="last_gps_update" string="Última Señal GPS" optional="show"/>
+                    <field name="acquisition_date" string="Fecha de Registro" optional="hide"/>
+                </tree>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- =========================================================================
+         4. VISTA BÚSQUEDA (SEARCH): FILTROS EN ESPAÑOL SIN VARIABLES INNECESARIAS
+         ========================================================================= -->
     <record id="fleet_vehicle_view_search_inherit_traccar" model="ir.ui.view">
         <field name="name">fleet.vehicle.search.inherit.traccar</field>
         <field name="model">fleet.vehicle</field>
         <field name="inherit_id" ref="fleet.fleet_vehicle_view_search"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='tag_ids']" position="replace"/>
-            <xpath expr="//field[@name='name']" position="attributes">
-                <attribute name="string">Vehículo / Placa</attribute>
-            </xpath>
-            <xpath expr="//field[@name='log_drivers']" position="attributes">
-                <attribute name="string">Conductores</attribute>
-            </xpath>
-            <xpath expr="//field[@name='model_id']" position="attributes">
-                <attribute name="string">Modelo</attribute>
-            </xpath>
-            <xpath expr="//field[@name='license_plate']" position="attributes">
-                <attribute name="string">Placa</attribute>
-            </xpath>
-            <xpath expr="//field[@name='state_id']" position="attributes">
-                <attribute name="string">Estado</attribute>
-            </xpath>
-            <xpath expr="//field[@name='driver_id']" position="attributes">
-                <attribute name="string">Conductor Actual</attribute>
-            </xpath>
-            <xpath expr="//filter[@name='available']" position="attributes">
-                <attribute name="string">Disponible</attribute>
+            <xpath expr="//search" position="replace">
+                <search string="Buscar Vehículos">
+                    <field name="name" string="Placa o Modelo"
+                           filter_domain="['|', ('name', 'ilike', self), ('license_plate', 'ilike', self)]"/>
+                    <field name="license_plate" string="Placa"/>
+                    <field name="driver_id" string="Conductor"/>
+                    <field name="model_id" string="Modelo"/>
+                    <field name="gps_imei" string="IMEI GPS"/>
+                    <field name="location" string="Campus Base"/>
+                    <separator/>
+                    <filter string="GPS En Línea" name="gps_online" domain="[('traccar_status', '=', 'online')]"/>
+                    <filter string="GPS Desconectado" name="gps_offline" domain="[('traccar_status', '=', 'offline')]"/>
+                    <separator/>
+                    <filter string="Con Conductor" name="with_driver" domain="[('driver_id', '!=', False)]"/>
+                    <filter string="Sin Conductor" name="without_driver" domain="[('driver_id', '=', False)]"/>
+                    <separator/>
+                    <filter string="Archivados" name="inactive" domain="[('active', '=', False)]"/>
+                    <group expand="0" string="Agrupar por">
+                        <filter string="Conductor" name="groupby_driver" context="{'group_by': 'driver_id'}"/>
+                        <filter string="Modelo" name="groupby_model" context="{'group_by': 'model_id'}"/>
+                        <filter string="Campus Base" name="groupby_location" context="{'group_by': 'location'}"/>
+                        <filter string="Estado GPS" name="groupby_gps" context="{'group_by': 'traccar_status'}"/>
+                    </group>
+                </search>
             </xpath>
         </field>
     </record>

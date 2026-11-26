@@ -225,19 +225,19 @@ class TransportMetricsSummary(models.Model):
         # Fichas interpretativas en HTML
         t_html = f"""
         <div class="table-responsive">
-            <table class="table table-bordered table-sm">
+            <table class="table table-bordered table-sm align-middle">
                 <thead class="table-light">
                     <tr><th>Métrica</th><th>Fórmula</th><th>Valor</th><th>Interpretación Operativa</th></tr>
                 </thead>
                 <tbody>
-                    <tr><td><strong>1. Cumplimiento de Rutas</strong></td><td>(Viajes Conformes / Total) * 100</td><td><span class="badge bg-primary">{m1}%</span></td><td>Nivel global de rutas completadas satisfactoriamente.</td></tr>
-                    <tr><td><strong>2. Puntualidad</strong></td><td>(Viajes a Tiempo / Total) * 100</td><td><span class="badge bg-info">{m2}%</span></td><td>Porcentaje de recorridos que no superaron el margen de tolerancia.</td></tr>
-                    <tr><td><strong>3. Retraso Promedio</strong></td><td>∑ Retrasos / N.º Atrasos</td><td>{m3} min</td><td>Tiempo medio de desfase acumulado en viajes impuntuales.</td></tr>
-                    <tr><td><strong>4. Paradas Cumplidas</strong></td><td>(Paradas Visitadas / Total Paradas) * 100</td><td><span class="badge bg-success">{m4}%</span></td><td>Efectividad de cobertura de puntos de control universitarios.</td></tr>
-                    <tr><td><strong>5. Desviación de Ruta</strong></td><td>(Viajes con Desvío / Total) * 100</td><td>{m5}%</td><td>Frecuencia de salida del corredor geográfico autorizado.</td></tr>
-                    <tr><td><strong>6. Diferencia de Distancia</strong></td><td>Avg(|Distancia Real - Estimada|)</td><td>{m6} km</td><td>Variación media entre el kilometraje planificado y real.</td></tr>
-                    <tr><td><strong>7. Tiempo Promedio de Recorrido</strong></td><td>∑ Duraciones / Total</td><td>{m7} min</td><td>Tiempo estándar de trayecto entre campus.</td></tr>
-                    <tr><td><strong>8. Tasa de Incidencias</strong></td><td>Total Incidencias / Total Viajes</td><td>{m8_freq} inc/viaje</td><td>Promedio de eventos o alertas registradas por cada viaje.</td></tr>
+                    <tr><td><strong>1. Cumplimiento de Rutas</strong></td><td>(Viajes Conformes / Total) * 100</td><td><span class="badge text-white" style="background-color:#2563eb;color:#ffffff;padding:4px 8px;">{m1}%</span></td><td>Nivel global de rutas completadas satisfactoriamente.</td></tr>
+                    <tr><td><strong>2. Puntualidad</strong></td><td>(Viajes a Tiempo / Total) * 100</td><td><span class="badge text-white" style="background-color:#0891b2;color:#ffffff;padding:4px 8px;">{m2}%</span></td><td>Porcentaje de recorridos que no superaron el margen de tolerancia.</td></tr>
+                    <tr><td><strong>3. Retraso Promedio</strong></td><td>∑ Retrasos / N.º Atrasos</td><td><strong>{m3} min</strong></td><td>Tiempo medio de desfase acumulado en viajes impuntuales.</td></tr>
+                    <tr><td><strong>4. Paradas Cumplidas</strong></td><td>(Paradas Visitadas / Total Paradas) * 100</td><td><span class="badge text-white" style="background-color:#16a34a;color:#ffffff;padding:4px 8px;">{m4}%</span></td><td>Efectividad de cobertura de puntos de control universitarios.</td></tr>
+                    <tr><td><strong>5. Desviación de Ruta</strong></td><td>(Viajes con Desvío / Total) * 100</td><td><strong>{m5}%</strong></td><td>Frecuencia de salida del corredor geográfico autorizado.</td></tr>
+                    <tr><td><strong>6. Diferencia de Distancia</strong></td><td>Avg(|Distancia Real - Estimada|)</td><td><strong>{m6} km</strong></td><td>Variación media entre el kilometraje planificado y real.</td></tr>
+                    <tr><td><strong>7. Tiempo Promedio de Recorrido</strong></td><td>∑ Duraciones / Total</td><td><strong>{m7} min</strong></td><td>Tiempo estándar de trayecto entre campus.</td></tr>
+                    <tr><td><strong>8. Tasa de Incidencias</strong></td><td>Total Incidencias / Total Viajes</td><td><strong>{m8_freq} inc/viaje</strong></td><td>Promedio de eventos o alertas registradas por cada viaje.</td></tr>
                 </tbody>
             </table>
         </div>
@@ -245,15 +245,15 @@ class TransportMetricsSummary(models.Model):
 
         cs_html = f"""
         <div class="table-responsive">
-            <table class="table table-bordered table-sm">
+            <table class="table table-bordered table-sm align-middle">
                 <thead class="table-light">
                     <tr><th>Métrica de Calidad</th><th>Fórmula / Medición</th><th>Resultado</th><th>Criterio ISO/IEC 25010</th></tr>
                 </thead>
                 <tbody>
-                    <tr><td><strong>CS1. Integridad GPS</strong></td><td>(Puntos Válidos / Total) * 100</td><td><span class="badge bg-success">{cs1}%</span></td><td>Fiabilidad / Integridad de Datos</td></tr>
-                    <tr><td><strong>CS2. Exactitud Sincronización</strong></td><td>(Puntos Válidos Traccar / Total Odoo) * 100</td><td><span class="badge bg-success">{cs2}%</span></td><td>Adecuación Funcional / Precisión</td></tr>
-                    <tr><td><strong>CS3. Tiempo de Respuesta</strong></td><td>Latencia de cómputo y extracción</td><td>{elapsed_ms} ms</td><td>Eficiencia de Desempeño / Tiempo</td></tr>
-                    <tr><td><strong>CS4. Precisión Detección</strong></td><td>(Incidencias Reales / Detectadas) * 100</td><td><span class="badge bg-primary">{cs4}%</span></td><td>Tolerancia a Fallos / Precisión</td></tr>
+                    <tr><td><strong>CS1. Integridad GPS</strong></td><td>(Puntos Válidos / Total) * 100</td><td><span class="badge text-white" style="background-color:#16a34a;color:#ffffff;padding:4px 8px;">{cs1}%</span></td><td>Fiabilidad / Integridad de Datos</td></tr>
+                    <tr><td><strong>CS2. Exactitud Sincronización</strong></td><td>(Puntos Válidos Traccar / Total Odoo) * 100</td><td><span class="badge text-white" style="background-color:#16a34a;color:#ffffff;padding:4px 8px;">{cs2}%</span></td><td>Adecuación Funcional / Precisión</td></tr>
+                    <tr><td><strong>CS3. Tiempo de Respuesta</strong></td><td>Latencia de cómputo y extracción</td><td><strong>{elapsed_ms} ms</strong></td><td>Eficiencia de Desempeño / Tiempo</td></tr>
+                    <tr><td><strong>CS4. Precisión Detección</strong></td><td>(Incidencias Reales / Detectadas) * 100</td><td><span class="badge text-white" style="background-color:#2563eb;color:#ffffff;padding:4px 8px;">{cs4}%</span></td><td>Tolerancia a Fallos / Precisión</td></tr>
                 </tbody>
             </table>
         </div>

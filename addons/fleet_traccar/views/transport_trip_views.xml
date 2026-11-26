@@ -5,30 +5,27 @@
         <field name="name">transport.trip.tree</field>
         <field name="model">transport.trip</field>
         <field name="arch" type="xml">
-            <tree string="Recorridos y Viajes de Transporte" 
-                  decoration-info="state == 'in_progress'" 
-                  decoration-success="compliance_status == 'compliant'" 
-                  decoration-warning="compliance_status == 'delayed'" 
-                  decoration-danger="compliance_status == 'non_compliant'">
-                <field name="name"/>
-                <field name="trip_direction" widget="badge" 
+            <tree string="Recorridos y Viajes de Transporte">
+                <field name="name" string="Código"/>
+                <field name="trip_direction" string="Sentido" widget="badge" 
                        decoration-info="trip_direction == 'outbound'" 
                        decoration-warning="trip_direction == 'inbound'"/>
-                <field name="date"/>
-                <field name="vehicle_id"/>
-                <field name="route_id"/>
-                <field name="scheduled_start_time"/>
-                <field name="actual_start_time"/>
-                <field name="duration_real_minutes"/>
-                <field name="actual_distance"/>
-                <field name="delay_minutes"/>
-                <field name="stop_completion_rate" widget="progressbar"/>
-                <field name="state" widget="badge" 
+                <field name="date" string="Fecha"/>
+                <field name="vehicle_id" string="Bus / Unidad"/>
+                <field name="driver_id" string="Conductor" optional="show"/>
+                <field name="route_id" string="Ruta"/>
+                <field name="scheduled_start_time" string="Salida Prog."/>
+                <field name="actual_start_time" string="Salida Real" optional="hide"/>
+                <field name="duration_real_minutes" string="Duración (min)" optional="hide"/>
+                <field name="actual_distance" string="Distancia (km)" optional="hide"/>
+                <field name="delay_minutes" string="Retraso (min)"/>
+                <field name="stop_completion_rate" string="% Paradas" widget="progressbar"/>
+                <field name="state" string="Estado" widget="badge" 
                        decoration-muted="state == 'draft'" 
                        decoration-info="state == 'in_progress'" 
                        decoration-success="state == 'completed'" 
                        decoration-danger="state == 'cancelled'"/>
-                <field name="compliance_status" widget="badge" 
+                <field name="compliance_status" string="Cumplimiento" widget="badge" 
                        decoration-success="compliance_status == 'compliant'" 
                        decoration-warning="compliance_status == 'delayed'" 
                        decoration-danger="compliance_status == 'non_compliant'"/>

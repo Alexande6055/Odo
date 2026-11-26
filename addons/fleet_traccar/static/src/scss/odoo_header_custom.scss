@@ -289,8 +289,314 @@
     }
 }
 
-/* 5. TARJETAS KANBAN DE VEHÍCULOS Y FLOTA */
-.o_kanban_view .o_kanban_record {
+/* 5. DIRECTORIO DE VEHÍCULOS (GRID DE CARDS DIRECTAS SIN TABLERO KANBAN) */
+.o_transport_vehicle_cards_grid {
+    background: #f8fafc !important;
+
+    .o_kanban_renderer.o_kanban_ungrouped {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)) !important;
+        gap: 18px !important;
+        padding: 20px !important;
+        align-content: start !important;
+    }
+
+    /* Ocultar divs fantasma de relleno de Odoo que rompen el CSS Grid */
+    .o_kanban_record.o_kanban_ghost {
+        display: none !important;
+    }
+
+    .o_transport_v_card {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border-radius: 14px !important;
+        border: 1px solid #e2e8f0 !important;
+        background: #ffffff !important;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04) !important;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        overflow: hidden !important;
+
+        &:hover {
+            transform: translateY(-2px) !important;
+            border-color: #38bdf8 !important;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.09) !important;
+        }
+
+        .o_v_card_header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 16px 16px 12px 16px;
+        }
+
+        .o_v_card_identity {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+            flex: 1 1 auto;
+        }
+
+        .o_v_card_avatar_img {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 1px solid #e2e8f0;
+            flex-shrink: 0;
+        }
+
+        .o_v_card_avatar_bus {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border: 1px solid #bfdbfe;
+            color: #1d4ed8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .o_v_card_titles {
+            min-width: 0;
+            flex: 1 1 auto;
+        }
+
+        .o_v_card_plate {
+            font-size: 16px;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: 0.4px;
+            line-height: 1.2;
+        }
+
+        .o_v_card_model {
+            font-size: 12.5px;
+            font-weight: 500;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        .o_v_card_status {
+            flex-shrink: 0;
+        }
+
+        .o_v_pill {
+            display: inline-flex;
+            align-items: center;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 999px;
+            white-space: nowrap;
+
+            &.o_v_pill_online {
+                background: #dcfce7;
+                color: #15803d;
+                border: 1px solid #bbf7d0;
+            }
+            &.o_v_pill_offline {
+                background: #fee2e2;
+                color: #b91c1c;
+                border: 1px solid #fecaca;
+            }
+            &.o_v_pill_idle {
+                background: #f1f5f9;
+                color: #475569;
+                border: 1px solid #e2e8f0;
+            }
+        }
+
+        .o_v_card_metrics {
+            display: flex;
+            align-items: center;
+            margin: 0 16px 12px 16px;
+            padding: 8px 12px;
+            background: #f8fafc;
+            border: 1px solid #f1f5f9;
+            border-radius: 10px;
+
+            .o_v_metric_item {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .o_v_metric_divider {
+                width: 1px;
+                height: 26px;
+                background: #e2e8f0;
+                margin: 0 12px;
+            }
+
+            .o_v_metric_label {
+                font-size: 10.5px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.4px;
+                color: #94a3b8;
+            }
+
+            .o_v_metric_val {
+                font-size: 13px;
+                font-weight: 700;
+                color: #0f172a;
+
+                &.o_v_muted {
+                    color: #64748b;
+                    font-weight: 600;
+                }
+            }
+        }
+
+        .o_v_card_meta {
+            padding: 0 16px 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1 1 auto;
+
+            .o_v_meta_row {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 12.5px;
+                color: #334155;
+
+                .o_v_meta_icon {
+                    width: 15px;
+                    text-align: center;
+                    color: #64748b;
+                    flex-shrink: 0;
+                }
+
+                .o_v_meta_key {
+                    color: #64748b;
+                    font-weight: 600;
+                    flex-shrink: 0;
+                }
+
+                .o_v_meta_val {
+                    font-weight: 600;
+                    color: #0f172a;
+                }
+
+                .o_v_placeholder {
+                    color: #94a3b8;
+                    font-weight: 400;
+                    font-style: italic;
+                }
+            }
+
+            .o_v_meta_tech {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: space-between;
+                gap: 8px;
+                margin-top: 4px;
+                padding-top: 8px;
+                border-top: 1px dashed #e2e8f0;
+                font-size: 11px;
+                color: #64748b;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            }
+        }
+
+        .o_v_card_footer {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+
+            .o_v_btn_map {
+                background: #0284c7 !important;
+                border: 1px solid #0284c7 !important;
+                color: #ffffff !important;
+                font-weight: 600 !important;
+                border-radius: 8px !important;
+                padding: 6px 12px !important;
+
+                &:hover {
+                    background: #0369a1 !important;
+                    border-color: #0369a1 !important;
+                }
+            }
+
+            .o_v_btn_sync {
+                background: #ffffff !important;
+                border: 1px solid #cbd5e1 !important;
+                color: #334155 !important;
+                border-radius: 8px !important;
+                padding: 6px 10px !important;
+
+                &:hover {
+                    background: #eff6ff !important;
+                    border-color: #0284c7 !important;
+                    color: #0284c7 !important;
+                }
+            }
+        }
+    }
+}
+
+/* 6. AJUSTES DEL FORMULARIO DE DETALLE DEL VEHÍCULO */
+.o_transport_vehicle_form {
+    .o_form_sheet {
+        max-width: 1140px !important;
+    }
+
+    .oe_button_box {
+        width: auto !important;
+        max-width: none !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: flex-end !important;
+
+        .oe_stat_button {
+            width: auto !important;
+            min-width: 145px !important;
+            max-width: none !important;
+            padding: 4px 14px 4px 6px !important;
+
+            .o_stat_info {
+                max-width: none !important;
+                overflow: visible !important;
+
+                .o_stat_value,
+                .o_stat_text {
+                    overflow: visible !important;
+                    text-overflow: unset !important;
+                    white-space: nowrap !important;
+                }
+            }
+        }
+    }
+
+    .oe_title h1 input,
+    .oe_title h1 span {
+        font-weight: 800 !important;
+        color: #0f172a !important;
+        letter-spacing: 0.5px !important;
+    }
+
+    .oe_title h3 {
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        color: #334155 !important;
+    }
+}
+
+/* 7. TARJETAS KANBAN GENERALES Y FIX DE CONTRASTE DE BADGES EN ODOO */
+.o_kanban_view:not(.o_transport_vehicle_cards_grid) .o_kanban_record {
     border-radius: 12px !important;
     border: 1px solid #e2e8f0 !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
@@ -320,6 +626,18 @@
         font-weight: 600 !important;
         letter-spacing: 0.2px !important;
     }
+
+    .badge.bg-primary,
+    .badge.bg-success,
+    .badge.bg-danger,
+    .badge.bg-info {
+        color: #ffffff !important;
+    }
+}
+
+/* Evitar truncamiento en columnas numéricas clave de listas */
+.o_list_table th[data-name="seats"] {
+    min-width: 95px !important;
 }
 
 

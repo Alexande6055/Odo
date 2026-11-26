@@ -10,8 +10,12 @@ const API_BASE = '/api';
 
 export class TraccarService {
   private static authHeader: string = '';
+  private static username: string = '';
+  private static password: string = '';
 
   public static setCredentials(user: string, pass: string) {
+    this.username = user || '';
+    this.password = pass || '';
     if (user && pass) {
       this.authHeader = 'Basic ' + btoa(`${user}:${pass}`);
     } else {
@@ -23,11 +27,13 @@ export class TraccarService {
     return { authHeader: this.authHeader };
   }
 
-  private static getHeaders(): HeadersInit {
+  private static getHeaders(includeContentType = false): HeadersInit {
     const headers: Record<string, string> = {
       'Accept': 'application/json',
-      'Content-Type': 'application/json',
     };
+    if (includeContentType) {
+      headers['Content-Type'] = 'application/json';
+    }
     if (this.authHeader) {
       headers['Authorization'] = this.authHeader;
     }
@@ -36,11 +42,29 @@ export class TraccarService {
 
   public static async ensureSession(): Promise<boolean> {
     try {
-      const res = await fetch(`${API_BASE}/session`, {
+      if (this.username && this.password) {
+        const body = new URLSearchParams({
+          email: this.username,
+          password: this.password,
+        });
+        const loginRes = await fetch(`${API_BASE}/session`, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: body.toString(),
+          credentials: 'include',
+        });
+        if (loginRes.ok) {
+          return true;
+        }
+      }
+      const checkRes = await fetch(`${API_BASE}/session`, {
         headers: this.getHeaders(),
         credentials: 'include',
       });
-      return res.ok;
+      return checkRes.ok;
     } catch {
       return false;
     }

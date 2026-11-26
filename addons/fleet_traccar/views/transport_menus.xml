@@ -60,7 +60,7 @@
               sequence="30"/>
 
     <menuitem id="menu_transport_metrics_action"
-              name="Panel de Indicadores (Dashboard)"
+              name="Evaluaciones de Calidad"
               parent="menu_transport_analytics_group"
               action="action_transport_metrics_summary"
               sequence="10"/>
@@ -72,7 +72,7 @@
               sequence="40"/>
 
     <menuitem id="menu_transport_fleet_vehicles_action"
-              name="Registro de Vehículos y Flota"
+              name="Directorio de Vehículos"
               parent="menu_transport_fleet_group"
               action="action_transport_fleet_vehicle"
               sequence="10"/>
@@ -80,7 +80,7 @@
     <menuitem id="menu_transport_vehicle_models_action"
               name="Modelos de Buses / Vehículos"
               parent="menu_transport_fleet_group"
-              action="fleet.fleet_vehicle_model_action"
+              action="action_transport_vehicle_model"
               sequence="15"/>
 
     <menuitem id="menu_transport_config_settings_action"
