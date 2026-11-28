@@ -14,8 +14,8 @@
                 <field name="vehicle_id" string="Bus / Unidad"/>
                 <field name="driver_id" string="Conductor" optional="show"/>
                 <field name="route_id" string="Ruta"/>
-                <field name="scheduled_start_time" string="Salida Prog."/>
-                <field name="actual_start_time" string="Salida Real" optional="hide"/>
+                <field name="scheduled_start_hour" string="Salida Prog." widget="float_time"/>
+                <field name="actual_start_hour" string="Salida Real" widget="float_time" optional="hide"/>
                 <field name="duration_real_minutes" string="Duración (min)" optional="hide"/>
                 <field name="actual_distance" string="Distancia (km)" optional="hide"/>
                 <field name="delay_minutes" string="Retraso (min)"/>
@@ -243,10 +243,14 @@
                             <field name="date" attrs="{'readonly': [('state', 'in', ('completed', 'cancelled'))]}"/>
                         </group>
                         <group string="2. Control Horario y Programación">
-                            <field name="scheduled_start_time" attrs="{'readonly': [('state', 'in', ('completed', 'cancelled'))]}"/>
-                            <field name="scheduled_end_time" attrs="{'readonly': [('state', 'in', ('completed', 'cancelled'))]}"/>
-                            <field name="actual_start_time" attrs="{'readonly': [('state', '=', 'completed')]}"/>
-                            <field name="actual_end_time" attrs="{'readonly': [('state', '=', 'completed')]}"/>
+                            <field name="scheduled_start_hour" widget="float_time" required="1" attrs="{'readonly': [('state', 'in', ('completed', 'cancelled'))]}"/>
+                            <field name="scheduled_end_hour" widget="float_time" required="1" attrs="{'readonly': [('state', 'in', ('completed', 'cancelled'))]}"/>
+                            <field name="actual_start_hour" widget="float_time" attrs="{'readonly': [('state', '=', 'completed')]}"/>
+                            <field name="actual_end_hour" widget="float_time" attrs="{'readonly': [('state', '=', 'completed')]}"/>
+                            <field name="scheduled_start_time" invisible="1"/>
+                            <field name="scheduled_end_time" invisible="1"/>
+                            <field name="actual_start_time" invisible="1"/>
+                            <field name="actual_end_time" invisible="1"/>
                             <field name="has_deviations" invisible="1"/>
                         </group>
                     </group>
@@ -267,14 +271,12 @@
                                       decoration-danger="status == 'missed'">
                                     <field name="sequence" string="#"/>
                                     <field name="name"/>
-                                    <field name="scheduled_time"/>
+                                    <field name="scheduled_hour" widget="float_time"/>
+                                    <field name="scheduled_time" invisible="1"/>
                                     <field name="actual_arrival_time"/>
                                     <field name="min_distance_meters"/>
                                     <field name="delay_minutes"/>
-                                    <field name="status" widget="badge" 
-                                           decoration-success="status == 'visited'" 
-                                           decoration-warning="status == 'delayed'" 
-                                           decoration-danger="status == 'missed'"/>
+                                    <field name="status"/>
                                 </tree>
                             </field>
                         </page>

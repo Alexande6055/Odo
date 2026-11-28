@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError
 
 class TransportRoute(models.Model):
     _name = 'transport.route'
@@ -125,6 +126,18 @@ class TransportRoute(models.Model):
         ('code_unique', 'unique(code)', 'El código de ruta debe ser único.')
     ]
 
+    @api.constrains('outbound_distance', 'return_distance', 'estimated_duration', 'return_duration', 'layover_duration', 'allowed_deviation_meters')
+    def _check_route_numeric_values(self):
+        for route in self:
+            if (route.outbound_distance or 0.0) < 0 or (route.return_distance or 0.0) < 0:
+                raise ValidationError(_("Las distancias de la ruta no pueden ser negativas."))
+            if (route.estimated_duration or 0.0) <= 0 or (route.return_duration or 0.0) <= 0:
+                raise ValidationError(_("Las duraciones estimadas de ida y retorno deben ser mayores a 0 minutos."))
+            if (route.layover_duration or 0.0) < 0:
+                raise ValidationError(_("El tiempo de espera en cabecera no puede ser negativo."))
+            if (route.allowed_deviation_meters or 0.0) <= 0:
+                raise ValidationError(_("La tolerancia de desvío debe ser mayor a 0 metros."))
+
     @api.depends('outbound_distance', 'return_distance')
     def _compute_total_distance(self):
         for route in self:
@@ -241,4 +254,18 @@ class TransportRouteStop(models.Model):
         ('inbound', 'Retorno / Regreso'),
         ('both', 'Ambos Sentidos')
     ], string='Sentido Parada', default='outbound', required=True)
+
+    @api.constrains('latitude', 'longitude', 'proximity_radius', 'expected_offset_minutes', 'time_tolerance')
+    def _check_stop_values(self):
+        for stop in self:
+            if stop.latitude < -90.0 or stop.latitude > 90.0:
+                raise ValidationError(_("La latitud de la parada '%s' debe estar entre -90 y 90 grados.") % stop.name)
+            if stop.longitude < -180.0 or stop.longitude > 180.0:
+                raise ValidationError(_("La longitud de la parada '%s' debe estar entre -180 y 180 grados.") % stop.name)
+            if (stop.proximity_radius or 0.0) <= 0:
+                raise ValidationError(_("El radio de proximidad de la parada '%s' debe ser mayor a 0 metros.") % stop.name)
+            if (stop.expected_offset_minutes or 0) < 0:
+                raise ValidationError(_("El tiempo estimado de llegada (+min) no puede ser negativo."))
+            if (stop.time_tolerance or 0) < 0:
+                raise ValidationError(_("La tolerancia de retraso (min) no puede ser negativa."))
 

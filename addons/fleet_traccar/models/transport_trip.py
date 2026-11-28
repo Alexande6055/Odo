@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 import json
 import logging
-from datetime import timedelta
+from datetime import datetime, time as dt_time, timedelta
 from dateutil import parser
+import pytz
 import requests
 
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 from .geo_utils import haversine_distance, min_distance_to_path, calculate_total_path_distance
 
 _logger = logging.getLogger(__name__)
@@ -31,7 +32,8 @@ class TransportTrip(models.Model):
     )
     driver_id = fields.Many2one(
         'res.partner',
-        string='Conductor Asignado'
+        string='Conductor Asignado',
+        index=True
     )
     route_id = fields.Many2one(
         'transport.route',
@@ -46,19 +48,47 @@ class TransportTrip(models.Model):
         index=True
     )
     scheduled_start_time = fields.Datetime(
-        string='Salida Programada',
+        string='Salida Programada (Fecha/Hora)',
         required=True,
+        default=lambda self: fields.Datetime.now() + timedelta(minutes=5),
         index=True
     )
     scheduled_end_time = fields.Datetime(
-        string='Llegada Programada',
-        required=True
+        string='Llegada Programada (Fecha/Hora)',
+        required=True,
+        default=lambda self: fields.Datetime.now() + timedelta(minutes=35)
     )
     actual_start_time = fields.Datetime(
-        string='Salida Real Registrada'
+        string='Salida Real Registrada (Fecha/Hora)'
     )
     actual_end_time = fields.Datetime(
-        string='Llegada Real Registrada'
+        string='Llegada Real Registrada (Fecha/Hora)'
+    )
+
+    # Campos de solo hora (HH:MM) para captura limpia sin fecha en formularios
+    scheduled_start_hour = fields.Float(
+        string='Salida Programada',
+        compute='_compute_trip_hours',
+        inverse='_inverse_scheduled_start_hour',
+        help='Hora de salida programada en formato 24h (HH:MM), asociada a la Fecha del Recorrido.'
+    )
+    scheduled_end_hour = fields.Float(
+        string='Llegada Programada',
+        compute='_compute_trip_hours',
+        inverse='_inverse_scheduled_end_hour',
+        help='Hora de llegada programada en formato 24h (HH:MM), asociada a la Fecha del Recorrido.'
+    )
+    actual_start_hour = fields.Float(
+        string='Salida Real Registrada',
+        compute='_compute_trip_hours',
+        inverse='_inverse_actual_start_hour',
+        help='Hora real de salida en formato 24h (HH:MM).'
+    )
+    actual_end_hour = fields.Float(
+        string='Llegada Real Registrada',
+        compute='_compute_trip_hours',
+        inverse='_inverse_actual_end_hour',
+        help='Hora real de llegada en formato 24h (HH:MM).'
     )
     state = fields.Selection([
         ('draft', 'Borrador / Programado'),
@@ -166,15 +196,45 @@ class TransportTrip(models.Model):
     )
     notes = fields.Text(string='Observaciones')
 
+    def _apply_hour_vals(self, vals, default_date=None):
+        """Convierte campos de solo hora (HH:MM) a Datetime UTC antes de crear/escribir."""
+        trip_date = vals.get('date') or default_date or fields.Date.context_today(self)
+        if isinstance(trip_date, str):
+            trip_date = fields.Date.from_string(trip_date)
+        hour_map = [
+            ('scheduled_start_hour', 'scheduled_start_time', True),
+            ('scheduled_end_hour', 'scheduled_end_time', True),
+            ('actual_start_hour', 'actual_start_time', False),
+            ('actual_end_hour', 'actual_end_time', False),
+        ]
+        for h_field, dt_field, always_set in hour_map:
+            if h_field in vals and dt_field not in vals:
+                h_val = vals[h_field]
+                if always_set or (h_val and h_val > 0.0):
+                    vals[dt_field] = self._date_and_hour_to_utc_datetime(trip_date, h_val or 0.0)
+                else:
+                    vals[dt_field] = False
+        return vals
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
             if vals.get('name', _('Nuevo')) == _('Nuevo'):
                 vals['name'] = self.env['ir.sequence'].next_by_code('transport.trip') or _('Nuevo')
+            self._apply_hour_vals(vals)
         records = super(TransportTrip, self).create(vals_list)
         for record in records:
             record._initialize_stop_checks()
         return records
+
+    def write(self, vals):
+        if any(k in vals for k in ('scheduled_start_hour', 'scheduled_end_hour', 'actual_start_hour', 'actual_end_hour')):
+            for rec in self:
+                rec_vals = dict(vals)
+                rec._apply_hour_vals(rec_vals, default_date=rec.date)
+                super(TransportTrip, rec).write(rec_vals)
+            return True
+        return super(TransportTrip, self).write(vals)
 
     @api.depends('point_ids', 'stop_check_ids', 'incident_ids')
     def _compute_counts(self):
@@ -189,6 +249,7 @@ class TransportTrip(models.Model):
         import json
         from .geo_utils import get_configured_map_web_url
         map_base = get_configured_map_web_url(self.env)
+        ICP = self.env['ir.config_parameter'].sudo()
         user = (ICP.get_param('fleet_traccar.user') or '').strip()
         password = ICP.get_param('fleet_traccar.password') or ''
 
@@ -312,11 +373,128 @@ class TransportTrip(models.Model):
             if checks:
                 self.write({'stop_check_ids': checks})
 
-    @api.onchange('route_id', 'trip_direction', 'scheduled_start_time')
+    def _get_user_tz(self):
+        tz_name = self.env.user.tz or self.env.context.get('tz') or 'America/Guayaquil'
+        try:
+            return pytz.timezone(tz_name)
+        except Exception:
+            return pytz.timezone('America/Guayaquil')
+
+    def _datetime_to_local_hour(self, dt_val):
+        if not dt_val:
+            return 0.0
+        dt_utc = pytz.UTC.localize(fields.Datetime.to_datetime(dt_val))
+        local_dt = dt_utc.astimezone(self._get_user_tz())
+        return round(local_dt.hour + (local_dt.minute / 60.0), 4)
+
+    def _date_and_hour_to_utc_datetime(self, trip_date, hour_float):
+        if not trip_date:
+            trip_date = fields.Date.context_today(self)
+        if hour_float < 0.0 or hour_float >= 24.0:
+            raise ValidationError(_("Las horas deben estar en el rango de 00:00 a 23:59."))
+        total_minutes = int(round(hour_float * 60))
+        hours = min(total_minutes // 60, 23)
+        minutes = total_minutes % 60
+        naive_local = datetime.combine(trip_date, dt_time(hours, minutes))
+        local_dt = self._get_user_tz().localize(naive_local)
+        return local_dt.astimezone(pytz.UTC).replace(tzinfo=None)
+
+    @api.depends('scheduled_start_time', 'scheduled_end_time', 'actual_start_time', 'actual_end_time')
+    def _compute_trip_hours(self):
+        for trip in self:
+            trip.scheduled_start_hour = trip._datetime_to_local_hour(trip.scheduled_start_time) if trip.scheduled_start_time else 0.0
+            trip.scheduled_end_hour = trip._datetime_to_local_hour(trip.scheduled_end_time) if trip.scheduled_end_time else 0.0
+            trip.actual_start_hour = trip._datetime_to_local_hour(trip.actual_start_time) if trip.actual_start_time else 0.0
+            trip.actual_end_hour = trip._datetime_to_local_hour(trip.actual_end_time) if trip.actual_end_time else 0.0
+
+    def _inverse_scheduled_start_hour(self):
+        for trip in self:
+            if trip.date:
+                trip.scheduled_start_time = trip._date_and_hour_to_utc_datetime(trip.date, trip.scheduled_start_hour or 0.0)
+
+    def _inverse_scheduled_end_hour(self):
+        for trip in self:
+            if trip.date:
+                trip.scheduled_end_time = trip._date_and_hour_to_utc_datetime(trip.date, trip.scheduled_end_hour or 0.0)
+
+    def _inverse_actual_start_hour(self):
+        for trip in self:
+            if trip.actual_start_hour and trip.actual_start_hour > 0.0:
+                trip.actual_start_time = trip._date_and_hour_to_utc_datetime(trip.date, trip.actual_start_hour)
+            elif not trip.actual_start_hour and trip.state == 'draft':
+                trip.actual_start_time = False
+
+    def _inverse_actual_end_hour(self):
+        for trip in self:
+            if trip.actual_end_hour and trip.actual_end_hour > 0.0:
+                trip.actual_end_time = trip._date_and_hour_to_utc_datetime(trip.date, trip.actual_end_hour)
+            elif not trip.actual_end_hour and trip.state in ('draft', 'in_progress'):
+                trip.actual_end_time = False
+
+    @api.onchange('date', 'route_id', 'trip_direction', 'scheduled_start_hour')
     def _onchange_route_schedule(self):
-        if self.route_id and self.scheduled_start_time:
-            dur = self.route_id.return_duration if self.trip_direction == 'inbound' else self.route_id.estimated_duration
-            self.scheduled_end_time = self.scheduled_start_time + timedelta(minutes=dur or 25.0)
+        if self.date and self.scheduled_start_hour is not None:
+            if 0.0 <= self.scheduled_start_hour < 24.0:
+                start_utc = self._date_and_hour_to_utc_datetime(self.date, self.scheduled_start_hour)
+                self.scheduled_start_time = start_utc
+                if self.route_id:
+                    dur = self.route_id.return_duration if self.trip_direction == 'inbound' else self.route_id.estimated_duration
+                    end_utc = start_utc + timedelta(minutes=dur or 25.0)
+                    self.scheduled_end_time = end_utc
+                    self.scheduled_end_hour = self._datetime_to_local_hour(end_utc)
+                elif self.scheduled_end_hour and 0.0 <= self.scheduled_end_hour < 24.0:
+                    self.scheduled_end_time = self._date_and_hour_to_utc_datetime(self.date, self.scheduled_end_hour)
+
+    @api.constrains('date', 'scheduled_start_time', 'scheduled_end_time', 'actual_start_time', 'actual_end_time', 'state')
+    def _check_trip_dates_and_hours(self):
+        if self.env.context.get('skip_date_validation'):
+            return
+        today = fields.Date.context_today(self)
+        now_utc = fields.Datetime.now()
+        for trip in self:
+            if trip.state == 'draft' and trip.date and trip.date < today:
+                raise ValidationError(
+                    _("No se puede programar un recorrido con una fecha anterior a hoy (%s).")
+                    % today.strftime('%d/%m/%Y')
+                )
+
+            if trip.scheduled_start_time and trip.scheduled_end_time:
+                if trip.scheduled_end_time <= trip.scheduled_start_time:
+                    raise ValidationError(
+                        _("La hora de Llegada Programada debe ser posterior a la hora de Salida Programada.")
+                    )
+
+            if trip.state == 'draft' and trip.date == today and trip.scheduled_start_time:
+                if trip.scheduled_start_time < (now_utc - timedelta(minutes=2)):
+                    raise ValidationError(
+                        _("La hora de Salida Programada no puede ser anterior a la hora actual para un recorrido de hoy.")
+                    )
+
+            if trip.actual_start_time and trip.actual_end_time:
+                if trip.actual_end_time < trip.actual_start_time:
+                    raise ValidationError(
+                        _("La hora de Llegada Real no puede ser anterior a la hora de Salida Real.")
+                    )
+
+    @api.constrains('vehicle_id', 'scheduled_start_time', 'scheduled_end_time', 'state')
+    def _check_vehicle_schedule_overlap(self):
+        for trip in self:
+            if trip.state not in ('draft', 'in_progress') or not trip.vehicle_id:
+                continue
+            if not trip.scheduled_start_time or not trip.scheduled_end_time:
+                continue
+            overlapping = self.search([
+                ('id', '!=', trip.id),
+                ('vehicle_id', '=', trip.vehicle_id.id),
+                ('state', 'in', ('draft', 'in_progress')),
+                ('scheduled_start_time', '<', trip.scheduled_end_time),
+                ('scheduled_end_time', '>', trip.scheduled_start_time),
+            ], limit=1)
+            if overlapping:
+                raise ValidationError(
+                    _("El vehículo %s ya tiene asignado el recorrido %s en un horario superpuesto.")
+                    % (trip.vehicle_id.display_name, overlapping.name)
+                )
 
     @api.depends('actual_start_time', 'actual_end_time', 'scheduled_end_time',
                  'actual_distance', 'estimated_distance', 'stop_check_ids.status',
@@ -403,8 +581,18 @@ class TransportTrip(models.Model):
         }
 
     def action_start_trip(self):
-        """Inicia el recorrido formalmente."""
+        """Inicia el recorrido formalmente con validaciones previas."""
         self.ensure_one()
+        if self.state != 'draft':
+            raise UserError(_("Solo se pueden iniciar recorridos en estado Borrador / Programado."))
+        today = fields.Date.context_today(self)
+        if self.date and self.date < today:
+            raise UserError(
+                _("No se puede iniciar un recorrido programado para una fecha pasada (%s).")
+                % self.date.strftime('%d/%m/%Y')
+            )
+        if self.scheduled_start_time and self.scheduled_end_time and self.scheduled_end_time <= self.scheduled_start_time:
+            raise UserError(_("La hora de Llegada Programada debe ser posterior a la Salida Programada."))
         vals = {'state': 'in_progress'}
         if not self.actual_start_time:
             vals['actual_start_time'] = fields.Datetime.now()
@@ -415,9 +603,14 @@ class TransportTrip(models.Model):
     def action_complete_trip(self):
         """Finaliza el recorrido y dispara el análisis automático."""
         self.ensure_one()
+        if self.state != 'in_progress':
+            raise UserError(_("Solo se pueden finalizar recorridos que estén En Curso."))
         vals = {'state': 'completed'}
+        end_dt = self.actual_end_time or fields.Datetime.now()
+        if self.actual_start_time and end_dt < self.actual_start_time:
+            raise UserError(_("La hora de Llegada Real no puede ser anterior a la Salida Real."))
         if not self.actual_end_time:
-            vals['actual_end_time'] = fields.Datetime.now()
+            vals['actual_end_time'] = end_dt
         self.write(vals)
         # Ejecutar análisis automático de cumplimiento de paradas, desvíos y retrasos
         self.action_analyze_trip()
@@ -744,7 +937,13 @@ class TransportTripStopCheck(models.Model):
         store=True
     )
     scheduled_time = fields.Datetime(
-        string='Horario Previsto'
+        string='Horario Previsto (Fecha/Hora)'
+    )
+    scheduled_hour = fields.Float(
+        string='Horario Previsto',
+        compute='_compute_scheduled_hour',
+        inverse='_inverse_scheduled_hour',
+        help='Hora prevista de paso en formato 24h (HH:MM).'
     )
     actual_arrival_time = fields.Datetime(
         string='Llegada Registrada'
@@ -765,6 +964,20 @@ class TransportTripStopCheck(models.Model):
         string='Retraso Registrado (min)',
         digits=(6, 1)
     )
+
+    @api.depends('scheduled_time')
+    def _compute_scheduled_hour(self):
+        for check in self:
+            if check.scheduled_time and check.trip_id:
+                check.scheduled_hour = check.trip_id._datetime_to_local_hour(check.scheduled_time)
+            else:
+                check.scheduled_hour = 0.0
+
+    def _inverse_scheduled_hour(self):
+        for check in self:
+            if check.trip_id:
+                trip_date = check.trip_id.date or fields.Date.context_today(check)
+                check.scheduled_time = check.trip_id._date_and_hour_to_utc_datetime(trip_date, check.scheduled_hour or 0.0)
 
 
 class TransportTripPoint(models.Model):

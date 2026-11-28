@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 import logging
+import re
 import requests
 from dateutil import parser
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 _logger = logging.getLogger(__name__)
 
@@ -79,6 +80,27 @@ class FleetVehicle(models.Model):
         compute='_compute_traccar_map_iframe',
         sanitize=False
     )
+
+    @api.constrains('gps_imei')
+    def _check_gps_imei(self):
+        for vehicle in self:
+            if not vehicle.gps_imei:
+                continue
+            imei_clean = vehicle.gps_imei.strip()
+            if not re.match(r'^[A-Za-z0-9_-]{5,20}$', imei_clean):
+                raise ValidationError(
+                    _("El Código IMEI GPS '%s' no es válido. Debe tener entre 5 y 20 caracteres alfanuméricos sin espacios.")
+                    % vehicle.gps_imei
+                )
+            duplicate = self.search([
+                ('id', '!=', vehicle.id),
+                ('gps_imei', '=', imei_clean),
+            ], limit=1)
+            if duplicate:
+                raise ValidationError(
+                    _("El Código IMEI GPS '%s' ya está asignado al vehículo %s.")
+                    % (imei_clean, duplicate.display_name)
+                )
 
     @api.depends('traccar_status', 'model_id', 'model_id.brand_id', 'model_id.name')
     def _compute_traccar_display_fields(self):

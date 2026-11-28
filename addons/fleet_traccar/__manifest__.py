@@ -38,6 +38,8 @@ Sistema Integral de Transporte y Monitoreo GPS para la Universidad Técnica de A
             'fleet_traccar/static/src/scss/transport_dashboard.scss',
             'fleet_traccar/static/src/xml/transport_dashboard.xml',
             'fleet_traccar/static/src/js/transport_dashboard.js',
+            'fleet_traccar/static/src/js/form_validation_toast.js',
+            'fleet_traccar/static/src/js/incident_map_picker.js',
         ],
     },
     'installable': True,

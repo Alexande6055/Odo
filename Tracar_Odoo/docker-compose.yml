@@ -40,5 +40,13 @@ services:
       - PORT=3000
       - TRACCAR_URL=http://traccar:8082
 
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: traccar-cloudflared
+    restart: unless-stopped
+    depends_on:
+      - traccar
+    command: tunnel --no-autoupdate --url http://traccar:5055
+
 volumes:
   postgres_data:

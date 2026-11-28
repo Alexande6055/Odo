@@ -42,17 +42,17 @@
                     <group>
                         <group string="Clasificación">
                             <field name="incident_type"/>
-                            <field name="severity" widget="badge" 
-                                   decoration-danger="severity == 'high'" 
-                                   decoration-warning="severity == 'medium'" 
-                                   decoration-info="severity == 'low'"/>
+                            <field name="severity" widget="radio" options="{'horizontal': true}"/>
                             <field name="timestamp"/>
                         </group>
-                        <group string="Contexto de Recorrido">
-                            <field name="trip_id"/>
+                        <group string="Contexto de Recorrido (Filtros + Selección)">
+                            <field name="filter_trip_date" placeholder="Todas las fechas..."/>
+                            <field name="filter_vehicle_id" placeholder="Todos los vehículos..." options="{'no_create': True}"/>
+                            <field name="filter_driver_id" placeholder="Todos los conductores..." options="{'no_create': True}"/>
+                            <field name="trip_id" options="{'no_create': True}" placeholder="Seleccione un recorrido en curso o completado..."/>
                             <field name="route_id"/>
                             <field name="vehicle_id"/>
-                            <field name="stop_id"/>
+                            <field name="stop_id" domain="[('route_id', '=', route_id)]" options="{'no_create': True}" placeholder="Parada de la ruta (opcional)..."/>
                         </group>
                     </group>
                     <group string="Cuantificación de la Anomalía">
@@ -64,6 +64,11 @@
                             <field name="latitude"/>
                             <field name="longitude"/>
                         </group>
+                    </group>
+                    <group string="Ubicación en Mapa (Haz clic o arrastra el marcador)">
+                        <div class="w-100" colspan="2">
+                            <widget name="incident_map_picker"/>
+                        </div>
                     </group>
                     <group string="Detalles y Justificación">
                         <field name="description" nolabel="1" placeholder="Descripción detallada del incumplimiento..."/>

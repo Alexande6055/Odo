@@ -641,3 +641,18 @@
 }
 
 
+
+
+/* ==========================================================================
+   Asterisco rojo (*) visible en todos los campos obligatorios de formularios
+   ========================================================================== */
+.o_form_view .o_wrap_field:has(.o_required_modifier) > .o_wrap_label label.o_form_label::after,
+.o_form_view tr:has(> td .o_required_modifier) > td.o_td_label label.o_form_label::after,
+.o_form_view label.o_form_label.o_required_modifier::after,
+.o_form_view .oe_title label.o_form_label:has(+ h1 .o_required_modifier)::after,
+.o_form_view .oe_title label.o_form_label:has(+ h2 .o_required_modifier)::after,
+.o_form_view .d-flex:has(.o_required_modifier) > label.o_form_label::after {
+    content: " *";
+    color: #dc2626;
+    font-weight: 700;
+}

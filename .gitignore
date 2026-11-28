@@ -7,3 +7,6 @@
 *.bbl
 *.blg
 
+__pycache__/
+*.pyc
+.scannerwork/
