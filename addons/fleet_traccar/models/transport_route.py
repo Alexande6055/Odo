@@ -153,8 +153,8 @@ class TransportRoute(models.Model):
             editor_url = f"/transport/route/map_editor/{route.id}"
             route_title = route.name or 'Trazado Oficial'
             route.route_map_html = f'''
-                <div class="card shadow-sm border-0 my-2 rounded-3 overflow-hidden">
-                    <div class="card-header text-white d-flex justify-content-between align-items-center py-2 px-3" style="background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);">
+                <div class="card shadow-sm border-0 my-2 rounded-3">
+                    <div class="card-header text-white d-flex justify-content-between align-items-center py-2 px-3 rounded-top" style="background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%); position: relative; z-index: 2;">
                         <div class="d-flex align-items-center gap-2">
                             <span class="badge rounded-pill bg-primary px-2 py-1">
                                 <i class="fa fa-pencil me-1"></i>Diseñador Interactivo de Trazado
@@ -165,9 +165,9 @@ class TransportRoute(models.Model):
                             <i class="fa fa-external-link me-1"></i>Abrir en Pantalla Completa
                         </a>
                     </div>
-                    <div class="card-body p-0 position-relative" style="height: 540px; background: #0f172a;">
+                    <div class="card-body p-0 position-relative" style="height: 580px; background: #0f172a;">
                         <iframe src="{editor_url}" 
-                                style="width: 100%; height: 540px; border: none; display: block;" 
+                                style="width: 100%; height: 580px; border: none; display: block;" 
                                 allow="geolocation">
                         </iframe>
                     </div>
@@ -181,6 +181,51 @@ class TransportRoute(models.Model):
             'url': f'/transport/route/map_editor/{self.id}',
             'target': 'new',
         }
+
+    def action_snap_route_to_streets(self):
+        """
+        Consulta OSRM (OpenStreetMap) usando las paradas ordenadas de la ruta
+        para reemplazar trazados rectos por la geometría real de las calles (Ida y Regreso).
+        """
+        import json
+        import requests
+        from .geo_utils import calculate_total_path_distance
+
+        for route in self:
+            all_stops = route.stop_ids.sorted('sequence')
+            if len(all_stops) < 2:
+                continue
+
+            out_stops = all_stops.filtered(lambda s: s.stop_direction in ('outbound', 'both')) or all_stops
+            ret_stops = all_stops.filtered(lambda s: s.stop_direction in ('inbound', 'both'))
+            if len(ret_stops) < 2:
+                ret_stops = out_stops[::-1]
+
+            def fetch_osrm(stops_seq):
+                waypoints = ";".join(f"{s.longitude},{s.latitude}" for s in stops_seq)
+                url = f"https://router.project-osrm.org/route/v1/driving/{waypoints}?overview=full&geometries=geojson"
+                res = requests.get(url, timeout=15)
+                if res.status_code == 200:
+                    data = res.json()
+                    if data.get('routes'):
+                        coords = data['routes'][0]['geometry']['coordinates']
+                        return [[round(c[1], 6), round(c[0], 6)] for c in coords]
+                return None
+
+            vals = {}
+            out_coords = fetch_osrm(out_stops)
+            if out_coords:
+                vals['reference_coordinates'] = json.dumps(out_coords)
+                vals['outbound_distance'] = round(calculate_total_path_distance(out_coords), 2)
+
+            ret_coords = fetch_osrm(ret_stops)
+            if ret_coords:
+                vals['return_coordinates'] = json.dumps(ret_coords)
+                vals['return_distance'] = round(calculate_total_path_distance(ret_coords), 2)
+
+            if vals:
+                route.write(vals)
+        return True
 
     @api.depends('stop_ids', 'trip_ids')
     def _compute_counts(self):

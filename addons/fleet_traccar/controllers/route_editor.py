@@ -74,6 +74,8 @@ class RouteEditorController(http.Controller):
             flex-wrap: wrap;
             gap: 8px;
             border-bottom: 1px solid #334155;
+            flex-shrink: 0;
+            position: relative;
             z-index: 1000;
         }}
         .tool-group {{ display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }}
@@ -121,10 +123,13 @@ class RouteEditorController(http.Controller):
             border-bottom: 1px solid #1e293b;
             gap: 15px;
             flex-wrap: wrap;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 999;
         }}
         .route-summary-box {{ display: flex; align-items: center; gap: 8px; }}
 
-        #map {{ flex: 1; width: 100%; }}
+        #map {{ flex: 1; min-height: 0; width: 100%; position: relative; z-index: 1; }}
         .toast-msg {{
             position: fixed;
             top: 75px;
@@ -196,11 +201,17 @@ class RouteEditorController(http.Controller):
                 <input type="checkbox" id="chkAutoRoute" checked style="cursor: pointer;">
                 <span><i class="fa fa-road"></i> Seguir Calles</span>
             </label>
+            <button id="btnAutoTraceStops" class="btn btn-outline" title="Trazar automáticamente por calles reales (OSRM) pasando por todas las paradas">
+                <i class="fa fa-magic"></i> Trazar por Calles
+            </button>
             <button id="btnAddStop" class="btn btn-outline" title="Haz clic en el mapa para registrar una parada">
                 <i class="fa fa-flag"></i> Nueva Parada
             </button>
-            <button id="btnUndo" class="btn btn-outline" title="Deshacer el último punto del trazado activo">
+            <button id="btnUndo" class="btn btn-outline" title="Deshacer el último tramo trazado (Ctrl+Z)">
                 <i class="fa fa-undo"></i> Deshacer
+            </button>
+            <button id="btnRevert" class="btn btn-outline" title="Restaurar los trazados al último estado guardado en Odoo">
+                <i class="fa fa-history"></i> Restaurar
             </button>
             <button id="btnClear" class="btn btn-danger" title="Borrar el trazado del sentido activo">
                 <i class="fa fa-trash"></i> Limpiar
@@ -236,8 +247,10 @@ class RouteEditorController(http.Controller):
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         const routeId = {route.id};
-        let pointsOutbound = {json.dumps(existing_outbound)};
-        let pointsReturn = {json.dumps(existing_return)};
+        const savedOutboundBackup = {json.dumps(existing_outbound)};
+        const savedReturnBackup = {json.dumps(existing_return)};
+        let pointsOutbound = savedOutboundBackup.map(p => [p[0], p[1]]);
+        let pointsReturn = savedReturnBackup.map(p => [p[0], p[1]]);
         const stops = {json.dumps(stops_list)};
 
         let activeTrack = 'outbound'; // 'outbound' or 'return'
@@ -253,6 +266,12 @@ class RouteEditorController(http.Controller):
         let destNameOut = "{route.destination or ''}";
         let originNameRet = "{getattr(route, 'origin_return', '') or ''}";
         let destNameRet = "{getattr(route, 'destination_return', '') or ''}";
+
+        // Evitar que Chromium/Brave desplace el iframe y oculte la cabecera al enfocar el mapa
+        const mapEl = document.getElementById('map');
+        const origMapFocus = mapEl.focus.bind(mapEl);
+        mapEl.focus = function() {{ origMapFocus({{ preventScroll: true }}); }};
+        mapEl.addEventListener('mousedown', () => {{ window.scrollTo(0, 0); }});
 
         // Inicializar Mapa centrado en Ambato
         const map = L.map('map', {{
@@ -554,6 +573,8 @@ class RouteEditorController(http.Controller):
 
             // Modo Trazado (Ida o Regreso)
             const targetArray = (activeTrack === 'outbound') ? pointsOutbound : pointsReturn;
+            const targetHistory = (activeTrack === 'outbound') ? historyOutbound : historyReturn;
+            targetHistory.push(targetArray.length);
             const autoRoute = document.getElementById('chkAutoRoute').checked;
 
             if (autoRoute && targetArray.length > 0) {{
@@ -586,15 +607,89 @@ class RouteEditorController(http.Controller):
             updateVertexLocations();
         }});
 
-        // Botón Deshacer
-        document.getElementById('btnUndo').addEventListener('click', () => {{
+        const historyOutbound = [];
+        const historyReturn = [];
+
+        // Botón Auto-Trazar por Calles desde Paradas (OSRM)
+        document.getElementById('btnAutoTraceStops').addEventListener('click', async () => {{
+            let routeStops = [];
+            if (activeTrack === 'outbound') {{
+                routeStops = stops.filter(s => s.direction === 'outbound' || s.direction === 'both');
+                if (routeStops.length < 2) routeStops = [...stops];
+            }} else {{
+                routeStops = stops.filter(s => s.direction === 'inbound' || s.direction === 'both');
+                if (routeStops.length < 2) routeStops = [...stops].reverse();
+            }}
+            if (routeStops.length < 2) {{
+                showToast('Se necesitan al menos 2 paradas para trazar por calles.', true);
+                return;
+            }}
+            const trackLabel = (activeTrack === 'outbound') ? 'IDA' : 'REGRESO';
+            showToast('Calculando ruta real por calles (' + trackLabel + ') con OSRM...');
+            try {{
+                const waypoints = routeStops.map(s => s.lon + ',' + s.lat).join(';');
+                const url = 'https://router.project-osrm.org/route/v1/driving/' + waypoints + '?overview=full&geometries=geojson';
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.routes && data.routes.length > 0) {{
+                    const geom = data.routes[0].geometry.coordinates.map(c => [Number(c[1].toFixed(6)), Number(c[0].toFixed(6))]);
+                    if (activeTrack === 'outbound') {{
+                        historyOutbound.push(pointsOutbound.length);
+                        pointsOutbound = geom;
+                        redrawOutbound();
+                    }} else {{
+                        historyReturn.push(pointsReturn.length);
+                        pointsReturn = geom;
+                        redrawReturn();
+                    }}
+                    updateVertexLocations();
+                    const km = calcDistance(geom).toFixed(2);
+                    showToast('✅ ' + trackLabel + ' trazada por calles reales (' + geom.length + ' pts, ' + km + ' km). Pulsa Guardar Rutas.');
+                }} else {{
+                    showToast('OSRM no devolvió una ruta válida para estas paradas.', true);
+                }}
+            }} catch (err) {{
+                console.warn('OSRM auto-trace error:', err);
+                showToast('No se pudo conectar con OSRM para trazar por calles.', true);
+            }}
+        }});
+
+        // Botón Deshacer (deshace el tramo completo del último clic) + Atajo Ctrl+Z
+        function performUndo() {{
             const targetArray = (activeTrack === 'outbound') ? pointsOutbound : pointsReturn;
+            const targetHistory = (activeTrack === 'outbound') ? historyOutbound : historyReturn;
             if (targetArray.length === 0) return;
-            targetArray.pop();
+            if (targetHistory.length > 0) {{
+                const prevLen = targetHistory.pop();
+                targetArray.splice(prevLen);
+            }} else {{
+                targetArray.pop();
+            }}
             if (activeTrack === 'outbound') redrawOutbound();
             else redrawReturn();
             updateVertexLocations();
-            showToast('Último vértice eliminado de ' + (activeTrack === 'outbound' ? 'Ida' : 'Regreso'));
+            showToast('↩️ Último tramo deshecho en ' + (activeTrack === 'outbound' ? 'Ida' : 'Regreso'));
+        }}
+        document.getElementById('btnUndo').addEventListener('click', performUndo);
+        document.addEventListener('keydown', (ev) => {{
+            if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'z') {{
+                ev.preventDefault();
+                performUndo();
+            }}
+        }});
+
+        // Botón Restaurar al último estado guardado en Odoo
+        document.getElementById('btnRevert').addEventListener('click', () => {{
+            if (confirm('¿Restaurar los trazados de Ida y Regreso al último estado guardado en Odoo?')) {{
+                pointsOutbound = savedOutboundBackup.map(p => [p[0], p[1]]);
+                pointsReturn = savedReturnBackup.map(p => [p[0], p[1]]);
+                historyOutbound.length = 0;
+                historyReturn.length = 0;
+                redrawOutbound();
+                redrawReturn();
+                updateVertexLocations();
+                showToast('🔄 Trazados restaurados al último estado guardado');
+            }}
         }});
 
         // Botón Limpiar
@@ -603,9 +698,11 @@ class RouteEditorController(http.Controller):
             if (confirm('¿Deseas reiniciar el trazado de ' + name + '?')) {{
                 if (activeTrack === 'outbound') {{
                     pointsOutbound = [];
+                    historyOutbound.length = 0;
                     redrawOutbound();
                 }} else {{
                     pointsReturn = [];
+                    historyReturn.length = 0;
                     redrawReturn();
                 }}
                 updateVertexLocations();
